@@ -1,26 +1,334 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   Flovoo Design System v1.1
+   Token values are copied verbatim from the system's tokens.css. Anything
+   derived (badge label colours, dark-mode tints) is mixed from those values
+   rather than hand-picked, so there is one source of truth per colour.
+
+   Light is the default; dark follows the OS. Both are navy-tinted — the system
+   is explicit that dark mode is never gray.
+   ========================================================================== */
+
+@theme {
+  /* Brand — constant across themes ---------------------------------------- */
+  --color-flovoo-sky: #2ea8ff;
+  --color-flovoo-blue: #4d6bfb;
+  --color-flovoo-blue-hover: #3d55d6;
+  --color-flovoo-violet: #7a5af8;
+  --color-flovoo-navy: #0b2659;
+  --color-flovoo-heading: #17244f;
+
+  /* Surfaces & text, measured from the reference portal.
+     The board is three stacked layers, not two — this is what makes a column
+     read as a group and a card as an object inside it:
+       page  →  column panel  →  card
+     In light the cards go back to pure white and float on a faintly grey
+     panel; in dark each step lifts by roughly the same amount. */
+  --color-page: #ffffff;
+  --color-column: #fafbfd;
+  --color-card: #ffffff;
+  --color-subtle: #f8f9fc;
+  --color-elevated: #ffffff;
+  --color-border: #dee1ea;
+  --color-text: #404864;
+  --color-text-secondary: #5b678f;
+  --color-text-tertiary: #5b678f;
+  --color-muted: #8b95b4;
+  /* Placeholder text is still text. Muted is 3.0:1 on white — fine for a
+     decorative icon, not for a string someone has to read. */
+  --color-placeholder: #646e93;
+
+  /* Changelog entry kinds, measured from the reference: a 50-level tint with a
+     600-level label. Green steps to 700 for the same AA reason as the board. */
+  --color-kind-new-bg: #f0fdf4;
+  --color-kind-new-text: #15803d;
+  --color-kind-improved-bg: #faf5ff;
+  --color-kind-improved-text: #9333ea;
+  --color-kind-fixed-bg: #fffbeb;
+  --color-kind-fixed-text: #a16207;
+  --color-kind-category-bg: #eff6ff;
+  --color-kind-category-text: #2563eb;
+
+  /* Stage colours, measured from the reference: a 50-level tint, a 600-level
+     label and a 400-level icon, per stage.
+     Two exceptions, both label-only: the reference's yellow-600 lands at
+     2.84:1 on its tint and its green-600 at 3.0:1, under AA at 12px. Those two
+     step one stop down their own ramp. Tints and icon colours are untouched,
+     so the board still reads exactly as the reference does. */
+  --color-stage-review-bg: #faf5ff;
+  --color-stage-review-text: #9333ea;
+  --color-stage-review-icon: #c084fc;
+  --color-stage-planned-bg: #fefce8;
+  --color-stage-planned-text: #a16207;
+  --color-stage-planned-icon: #fbbf24;
+  --color-stage-progress-bg: #eff6ff;
+  --color-stage-progress-text: #2563eb;
+  --color-stage-progress-icon: #60a5fa;
+  --color-stage-shipped-bg: #dcfce7;
+  --color-stage-shipped-text: #15803d;
+  --color-stage-shipped-icon: #4ade80;
+
+  /* Semantic — kept from the Flovoo system for non-stage use. */
+  --color-success: #12b76a;
+  --color-warning: #f79009;
+  --color-danger: #e5484d;
+  --color-info: #4d6bfb;
+  --color-info-tint: #edf0ff;
+  --color-info-label: color-mix(in oklab, var(--color-info) 58%, var(--color-flovoo-heading));
+
+  /* Flovoo Blue is 4.35:1 on white — just under AA at label sizes — so links
+     and the active tab use the system's hover blue on light. */
+  --color-link: #3d55d6;
+
+  /* The system's "primary solid", for buttons that must read as Flovoo without
+     taking the gradient — that is reserved for one CTA per view.
+     White on #4D6BFB measures 4.36:1, just under AA at 14px, so the solid uses
+     the system's own hover blue. In dark the brand lightens one step, as the
+     system asks, and the label flips to Ink Navy to keep the ratio. */
+  --color-brand-solid: #3d55d6;
+  --color-brand-solid-text: #ffffff;
+
+  /* Type ------------------------------------------------------------------- */
+  --font-ui: var(--font-jakarta), "Segoe UI", system-ui, sans-serif;
+  --font-ar: var(--font-noto-arabic), var(--font-jakarta), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* Shape & elevation ------------------------------------------------------ */
+  --radius-input: 6px;
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(23 36 79 / 0.05);
+  --shadow-lg: 0 12px 32px rgb(23 36 79 / 0.14);
+
+  /* Motion ----------------------------------------------------------------- */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 150ms;
+  --dur-standard: 200ms;
+  --dur-large: 280ms;
+  --animate-rise: rise var(--dur-large) var(--ease-expo);
+
+  /* Layout -----------------------------------------------------------------
+     1160 is the system's max width for marketing content and is used for prose
+     pages. The board is app content: four columns at 1160 leave 255px each,
+     which wraps most titles onto three lines, so it gets its own wider track. */
+  --container-content: 1160px;
+  --container-board: 1320px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark mode — navy-tinted, never gray.
+   Only the neutral roles and the derived labels change; brand hues hold. */
+/* Dark mode.
+   The reference's dark page is a near-black neutral; the Flovoo system's one
+   hard rule here is that dark is navy-tinted, never gray, so the surfaces stay
+   Flovoo's. The stage colours follow the reference exactly: the hue at 12% over
+   the card, with a 400-level label and icon.
+   
+   Keyed off `data-theme` rather than the media query so the two sources of
+   truth — the OS and the visitor's own choice — resolve to one value. The
+   inline script in the layout sets the attribute before first paint; in `auto`
+   it sets whatever the OS asks for and follows it if that changes. One block,
+   so a token can never be updated in one theme and forgotten in the other. */
+:root[data-theme="dark"] {
+  /* The same three-step ladder as the reference, in Flovoo's navy rather than
+     its near-black: each layer lifts by a comparable amount so a column still
+     reads as a group and a card as an object on it. */
+  --color-page: #0e1220;
+  --color-column: #151a2b;
+  --color-card: #1d2337;
+  --color-subtle: #252c42;
+  --color-elevated: #2b3350;
+  --color-border: #2c3450;
+  --color-text: #eceff7;
+  --color-text-secondary: #b2b7cd;
+  --color-text-tertiary: #a6afc6;
+  --color-muted: #8a93ad;
+  --color-placeholder: #97a0ba;
+  --color-flovoo-blue: #6e8bff;
+  --color-link: #6e8bff;
+  --color-brand-solid: #6e8bff;
+  --color-brand-solid-text: #0b2659;
+
+  --color-stage-review-bg: color-mix(in oklab, #a855f7 12%, #1d2337);
+  --color-stage-review-text: #c084fc;
+  --color-stage-review-icon: #c084fc;
+  --color-stage-planned-bg: color-mix(in oklab, #eab308 12%, #1d2337);
+  --color-stage-planned-text: #fbbf24;
+  --color-stage-planned-icon: #fbbf24;
+  --color-stage-progress-bg: color-mix(in oklab, #3b82f6 12%, #1d2337);
+  --color-stage-progress-text: #60a5fa;
+  --color-stage-progress-icon: #60a5fa;
+  --color-stage-shipped-bg: color-mix(in oklab, #22c55e 12%, #1d2337);
+  --color-stage-shipped-text: #4ade80;
+  --color-stage-shipped-icon: #4ade80;
+
+  --color-kind-new-bg: color-mix(in oklab, #22c55e 12%, #1d2337);
+  --color-kind-new-text: #4ade80;
+  --color-kind-improved-bg: color-mix(in oklab, #a855f7 12%, #1d2337);
+  --color-kind-improved-text: #c084fc;
+  --color-kind-fixed-bg: color-mix(in oklab, #eab308 12%, #1d2337);
+  --color-kind-fixed-text: #fbbf24;
+  --color-kind-category-bg: color-mix(in oklab, #3b82f6 12%, #1d2337);
+  --color-kind-category-text: #60a5fa;
+
+  --color-info-tint: color-mix(in oklab, #4d6bfb 18%, #1d2337);
+  --color-info-label: color-mix(in oklab, #4d6bfb 55%, white);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.24);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.45);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes rise {
+  from {
+    transform: translateY(0.5rem);
+  }
+  to {
+    transform: none;
   }
 }
 
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Until the inline script resolves a theme, and for anyone without JS. */
+  color-scheme: light dark;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Native controls and scrollbars follow the resolved theme, not just the OS. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-page);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Arabic: Noto Sans Arabic, one step larger, looser leading, no tracking. */
+html[lang="ar"] body {
+  font-family: var(--font-ar);
+  font-size: 15px;
+  line-height: 1.7;
+  letter-spacing: normal;
+}
+
+html[lang="ar"] :is(h1, h2, h3) {
+  letter-spacing: normal;
+}
+
+:is(h1, h2, h3) {
+  letter-spacing: -0.01em;
+}
+
+/* Arabic never sets labels in caps. */
+html[lang="ar"] .label-caps {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-flovoo-blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-input);
+}
+
+::selection {
+  background-color: color-mix(in oklab, var(--color-flovoo-blue) 24%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Utilities
+   -------------------------------------------------------------------------- */
+
+/* The one gradient in the system. Reserved for the primary CTA and brand
+   surfaces — never body text, never two gradient CTAs in one view. */
+@utility gradient-brand {
+  background-image: linear-gradient(135deg, #2ea8ff 0%, #4d6bfb 50%, #7a5af8 100%);
+}
+
+@utility gradient-text {
+  background-image: linear-gradient(135deg, #2ea8ff 0%, #4d6bfb 50%, #7a5af8 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Standalone numbers only — a bare count, an ID, a phone number. Forcing the
+   direction is what keeps these LTR inside an RTL line, so it must never wrap
+   a string that also contains Arabic words: doing so reorders the sentence. */
+@utility numeral {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+/* Mixed text that happens to contain digits — dates, "3 of 12". Bidi already
+   places Western digits correctly here, so only the figures are aligned. */
+@utility numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility label-caps {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@utility skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-border) 0%,
+    color-mix(in oklab, var(--color-border) 45%, var(--color-card)) 40%,
+    var(--color-border) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: var(--radius-control);
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@utility clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

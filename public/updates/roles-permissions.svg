@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img">
+  <defs>
+    <linearGradient id="rp-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B2659"/>
+      <stop offset="100%" stop-color="#17244F"/>
+    </linearGradient>
+    <linearGradient id="rp-accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2EA8FF"/>
+      <stop offset="50%" stop-color="#4D6BFB"/>
+      <stop offset="100%" stop-color="#7A5AF8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="600" fill="url(#rp-bg)"/>
+  <circle cx="180" cy="120" r="200" fill="#7A5AF8" opacity="0.15"/>
+  <circle cx="1020" cy="500" r="220" fill="#2EA8FF" opacity="0.12"/>
+
+  <!-- three role cards, each with a different amount of access -->
+  <g>
+    <rect x="120" y="150" width="300" height="300" rx="24" fill="#151A2C" stroke="#4D6BFB" stroke-width="2"/>
+    <circle cx="180" cy="212" r="26" fill="url(#rp-accent)"/>
+    <rect x="220" y="204" width="120" height="16" rx="8" fill="#ECEFF7" opacity="0.9"/>
+    <g fill="#12B76A"><circle cx="164" cy="284" r="10"/><circle cx="164" cy="330" r="10"/><circle cx="164" cy="376" r="10"/></g>
+    <g fill="#ECEFF7" opacity="0.55">
+      <rect x="188" y="277" width="180" height="14" rx="7"/>
+      <rect x="188" y="323" width="150" height="14" rx="7"/>
+      <rect x="188" y="369" width="196" height="14" rx="7"/>
+    </g>
+  </g>
+
+  <g>
+    <rect x="450" y="150" width="300" height="300" rx="24" fill="#151A2C" stroke="#2C3450" stroke-width="2"/>
+    <circle cx="510" cy="212" r="26" fill="#4D6BFB"/>
+    <rect x="550" y="204" width="120" height="16" rx="8" fill="#ECEFF7" opacity="0.9"/>
+    <g fill="#12B76A"><circle cx="494" cy="284" r="10"/><circle cx="494" cy="330" r="10"/></g>
+    <circle cx="494" cy="376" r="10" fill="#8A93AD" opacity="0.5"/>
+    <g fill="#ECEFF7" opacity="0.55">
+      <rect x="518" y="277" width="180" height="14" rx="7"/>
+      <rect x="518" y="323" width="150" height="14" rx="7"/>
+    </g>
+    <rect x="518" y="369" width="196" height="14" rx="7" fill="#ECEFF7" opacity="0.2"/>
+  </g>
+
+  <g>
+    <rect x="780" y="150" width="300" height="300" rx="24" fill="#151A2C" stroke="#2C3450" stroke-width="2"/>
+    <circle cx="840" cy="212" r="26" fill="#8A93AD"/>
+    <rect x="880" y="204" width="120" height="16" rx="8" fill="#ECEFF7" opacity="0.9"/>
+    <circle cx="824" cy="284" r="10" fill="#12B76A"/>
+    <g fill="#8A93AD" opacity="0.5"><circle cx="824" cy="330" r="10"/><circle cx="824" cy="376" r="10"/></g>
+    <rect x="848" y="277" width="180" height="14" rx="7" fill="#ECEFF7" opacity="0.55"/>
+    <g fill="#ECEFF7" opacity="0.2">
+      <rect x="848" y="323" width="150" height="14" rx="7"/>
+      <rect x="848" y="369" width="196" height="14" rx="7"/>
+    </g>
+  </g>
+</svg>
