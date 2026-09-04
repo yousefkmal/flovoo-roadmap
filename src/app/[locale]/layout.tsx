@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_Arabic, Plus_Jakarta_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import "@/app/globals.css";
+import { AuthNotice } from "@/components/account/AuthNotice";
 import { DIRECTION, LOCALES, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -70,6 +72,8 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
+  const dict = getDictionary(locale);
+
   return (
     <html
       lang={locale}
@@ -82,7 +86,13 @@ export default async function LocaleLayout({
         {/* Runs before first paint so the page never renders light and flips. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="flex min-h-full flex-col bg-page text-text">{children}</body>
+      <body className="flex min-h-full flex-col bg-page text-text">
+        {/* Reads the URL, so it needs a boundary to keep the page static. */}
+        <Suspense fallback={null}>
+          <AuthNotice dict={dict} />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }
