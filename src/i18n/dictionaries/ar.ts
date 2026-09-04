@@ -56,6 +56,8 @@ const ar = {
     resultsSummary: "{count} من {total}",
     noResultsTitle: "لا توجد نتائج مطابقة",
     noResultsBody: "جرّب كلمة أقصر أو اختر قسمًا آخر.",
+    boardEmptyTitle: "لا توجد أفكار على الخطة بعد",
+    boardEmptyBody: "أول الأفكار ستظهر هنا. شارك فكرتك وابدأ القائمة.",
   },
   card: {
     newBadge: "جديد",

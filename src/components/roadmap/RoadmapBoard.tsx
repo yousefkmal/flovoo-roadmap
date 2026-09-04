@@ -166,10 +166,21 @@ export function RoadmapBoard({
           </div>
         </div>
       ) : (
+        // An empty board and an empty result set are different situations.
+        // Telling someone to "try a shorter term" when there is nothing to
+        // search sends them looking for a mistake they did not make.
         <EmptyState
           className="mt-8"
-          title={dict.filters.noResultsTitle}
-          body={dict.filters.noResultsBody}
+          title={
+            features.length === 0
+              ? dict.filters.boardEmptyTitle
+              : dict.filters.noResultsTitle
+          }
+          body={
+            features.length === 0
+              ? dict.filters.boardEmptyBody
+              : dict.filters.noResultsBody
+          }
         />
       )}
 

@@ -54,6 +54,8 @@ const en: Dictionary = {
     resultsSummary: "{count} of {total}",
     noResultsTitle: "Nothing matches that",
     noResultsBody: "Try a shorter term or pick another category.",
+    boardEmptyTitle: "Nothing on the roadmap yet",
+    boardEmptyBody: "The first ideas will show up here. Share yours and start it off.",
   },
   card: {
     newBadge: "New",
