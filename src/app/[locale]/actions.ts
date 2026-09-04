@@ -129,7 +129,18 @@ export async function emailSignInAction(
         data: name.trim() ? { full_name: name.trim() } : undefined,
       },
     });
-    if (error) return { status: "error", message: error.message };
+    if (error) {
+      // The two usual causes are configuration, not bad luck: an origin that
+      // is not on Supabase's redirect allow list, and the shared mailer's
+      // hourly cap. A generic "try again" sends people round in circles, so
+      // the real reason goes to the platform logs and a mapped one to the UI.
+      console.error("[flovoo] email sign-in failed", {
+        origin,
+        status: error.status,
+        message: error.message,
+      });
+      return { status: "error", message: error.message };
+    }
     return { status: "sent", email: email.trim() };
   }
 

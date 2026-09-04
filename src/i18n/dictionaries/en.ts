@@ -72,6 +72,8 @@ const en: Dictionary = {
     errorExpired: "That sign-in link has expired or was already used. Ask for a new one and open it in this browser.",
     errorFailed: "Sign-in didn't go through. Try again, and ask for a fresh link if it keeps failing.",
     errorUnconfigured: "Sign-in isn't connected yet. Someone on the team needs to finish setting it up.",
+    errorRateLimit: "Too many sign-in links were requested. Wait an hour, or set up an email sender.",
+    errorRedirect: "This address isn't allowed to sign in yet. Open the site on its main address instead.",
     or: "or",
     emailSubmit: "Email me a sign-in link",
     sending: "Sending…",

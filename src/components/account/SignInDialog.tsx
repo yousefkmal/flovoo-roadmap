@@ -175,7 +175,7 @@ export function SignInDialog({
 
             {state.status === "error" ? (
               <p role="alert" className="text-sm font-medium text-danger">
-                {dict.auth.failed}
+                {signInReason(state.message, dict)}
               </p>
             ) : null}
 
@@ -194,4 +194,20 @@ export function SignInDialog({
       )}
     </Dialog>
   );
+}
+
+/**
+ * Turns Supabase's own wording into something a reader can act on. Only the
+ * two cases a person can actually resolve are named; anything else stays
+ * generic, and the full text is in the server logs either way.
+ */
+function signInReason(message: string | undefined, dict: Dictionary): string {
+  const text = (message ?? "").toLowerCase();
+  if (text.includes("rate limit") || text.includes("too many")) {
+    return dict.auth.errorRateLimit;
+  }
+  if (text.includes("redirect") || text.includes("not allowed")) {
+    return dict.auth.errorRedirect;
+  }
+  return dict.auth.failed;
 }
