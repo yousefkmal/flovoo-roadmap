@@ -315,6 +315,27 @@ Open indexing (`NEXT_PUBLIC_HELP_INDEXABLE=true`) only once `help.flovoo.com`
 resolves to this app **and** the content is ready to be found. Decided at the
 Phase 4 review, 2026-09-05.
 
+## The help center is live at help.flovoo.com
+
+Deployed 2026-09-06. `help.flovoo.com` and `news.flovoo.com` are the same
+Vercel project; the host is the switch (`proxy.ts`), and it only works when
+**`NEXT_PUBLIC_HELP_URL` is set in Vercel**. It was missing on the first
+deploy, so the help host served the roadmap and all 231 old Intercom links
+404'd. Adding the domain also made it Vercel's production URL, which dragged
+the roadmap's own canonical and sitemap URLs onto the wrong host until
+`NEXT_PUBLIC_SITE_URL=https://news.flovoo.com` was set explicitly. Both are
+build-time variables: changing them needs a redeploy, not just a save.
+
+**Indexing is still closed** — `NEXT_PUBLIC_HELP_INDEXABLE` is unset, which
+is what keeps `noindex` on every help page. Verified live.
+
+`npm run check:help-links` answers the question that decides whether the
+domain is safe to move: does every stored redirect reach a page a reader can
+actually see? It reads the database, and its answer matched the live domain
+exactly (182 of 231) — so it can be trusted without hitting the network.
+The other 49 point at articles the user deliberately left unpublished
+because they were empty in Intercom too.
+
 ## Permanent checks
 
 Run these before calling any phase done, and again before a deploy.
