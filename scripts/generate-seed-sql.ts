@@ -46,7 +46,7 @@ lines.push(
   "",
   "insert into features (",
   "  id, title_ar, title_en, description_ar, description_en, status, category_id,",
-  "  vote_count, is_pinned, source, submitted_by_name, shipped_at, created_at, updated_at",
+  "  vote_count, is_pinned, sort_order, source, submitted_by_name, shipped_at, created_at, updated_at",
   ") values",
 );
 
@@ -54,7 +54,7 @@ lines.push(
   FEATURES.map(
     (f) =>
       `  (${q(f.id)}, ${q(f.title_ar)}, ${q(f.title_en)}, ${q(f.description_ar)}, ${q(f.description_en)},\n` +
-      `   ${q(f.status)}, ${q(f.category_id)}, ${f.vote_count}, ${b(f.is_pinned)}, ${q(f.source)},\n` +
+      `   ${q(f.status)}, ${q(f.category_id)}, ${f.vote_count}, ${b(f.is_pinned)}, ${f.sort_order}, ${q(f.source)},\n` +
       `   ${q(f.submitted_by_name)}, ${ts(f.shipped_at)}, ${ts(f.created_at)}, ${ts(f.updated_at)})`,
   ).join(",\n") + ";",
   "",

@@ -31,6 +31,8 @@ const BOARD_STATUS_SET = new Set<string>(BOARD_STATUSES);
 function byBoardOrder(a: Feature, b: Feature): number {
   if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
   if (a.vote_count !== b.vote_count) return b.vote_count - a.vote_count;
+  // Between features the board ranks equally, the manual position decides.
+  if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
   return Date.parse(b.created_at) - Date.parse(a.created_at);
 }
 
@@ -79,6 +81,7 @@ export async function getBoardFeatures(): Promise<FeatureWithCategory[]> {
     .in("status", [...BOARD_STATUSES])
     .order("is_pinned", { ascending: false })
     .order("vote_count", { ascending: false })
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   if (error) throw new Error(`Failed to load the board: ${error.message}`);
   return withCategory(data as Feature[], categories);
@@ -91,7 +94,11 @@ export async function getShippedFeatures(): Promise<FeatureWithCategory[]> {
   if (!supabase) {
     const features = localFeatureState(FEATURES)
       .filter((f) => f.status === "shipped")
-      .sort((a, b) => Date.parse(b.shipped_at ?? "") - Date.parse(a.shipped_at ?? ""));
+      .sort(
+        (a, b) =>
+          Date.parse(b.shipped_at ?? "") - Date.parse(a.shipped_at ?? "") ||
+          a.sort_order - b.sort_order,
+      );
     return withCategory(features, categories);
   }
 
@@ -99,7 +106,9 @@ export async function getShippedFeatures(): Promise<FeatureWithCategory[]> {
     .from("features")
     .select("*")
     .eq("status", "shipped")
-    .order("shipped_at", { ascending: false });
+    .order("shipped_at", { ascending: false })
+    // A whole batch can share one shipped date; the manual position separates them.
+    .order("sort_order", { ascending: true });
   if (error) throw new Error(`Failed to load shipped features: ${error.message}`);
   return withCategory(data as Feature[], categories);
 }

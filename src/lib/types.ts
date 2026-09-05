@@ -48,6 +48,8 @@ export interface Feature {
   category_id: string | null;
   vote_count: number;
   is_pinned: boolean;
+  /** Manual position among features the board ranks equally (migration 0015). */
+  sort_order: number;
   source: FeatureSource;
   submitted_by_name: string | null;
   shipped_at: string | null;
