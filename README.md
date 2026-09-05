@@ -479,6 +479,30 @@ optional links — the "read more" article and the "explore it" button. Both URL
 are re-validated on the server and dropped if they are not `http(s)`; the client
 input is a convenience, not the check.
 
+## Share cards
+
+`public/og-ar.png` and `public/og-en.png` are what WhatsApp, Slack and X show
+when someone shares a link. They are rendered from `tools/og-card.html` in a
+real browser and committed as files:
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
+  --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 \
+  --screenshot=public/og-ar.png "file://$PWD/tools/og-card.html?l=ar"
+```
+
+**Not generated at request time.** `next/og` was the first attempt and it
+renders Arabic with the words in reverse order — Satori's bidi handling does
+not survive a full RTL sentence, and no styling fixes it. A browser gets the
+shaping right, so the card is a build artifact rather than a route.
+
+Both sit under WhatsApp's ~300KB preview limit. Re-render them whenever the
+title or tagline changes; nothing does it automatically.
+
+**`NEXT_PUBLIC_SITE_URL` decides the absolute URL** in the tags. Unset, it
+falls back to Vercel's project domain, which serves the image correctly but
+puts the wrong host in `og:url`. Set it to the canonical domain.
+
 ## Still to come
 
 - **Email delivery.** `notification_outbox` fills correctly on every ship, but

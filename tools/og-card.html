@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
+<style>
+  html,body{margin:0;padding:0;width:1200px;height:630px;overflow:hidden}
+  .card{
+    position:relative;width:1200px;height:630px;box-sizing:border-box;
+    padding:64px 72px;display:flex;flex-direction:column;justify-content:space-between;
+    background:#0B2659;
+    font-family:"Noto Sans Arabic","Plus Jakarta Sans",sans-serif;
+  }
+  .glow{position:absolute;inset:0;background:
+    radial-gradient(900px 460px at 85% -5%, rgba(77,107,251,.55), rgba(11,38,89,0) 70%),
+    radial-gradient(600px 380px at 5% 105%, rgba(122,90,248,.28), rgba(11,38,89,0) 70%);}
+  .inner{position:relative;display:flex;flex-direction:column;justify-content:space-between;height:100%}
+  .rule{width:132px;height:8px;border-radius:999px;
+    background:linear-gradient(135deg,#2EA8FF,#4D6BFB,#7A5AF8)}
+  .mark{font-size:34px;font-weight:800;color:#8FB6FF;letter-spacing:.01em}
+  h1{margin:10px 0 0;font-size:76px;line-height:1.28;font-weight:800;color:#fff;letter-spacing:-.01em}
+  p{margin:18px 0 0;font-size:31px;line-height:1.55;color:#B7C7E8;max-width:930px}
+  .chips{display:flex;gap:14px}
+  .chip{font-size:25px;font-weight:600;color:#D5DFF5;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:10px 26px;white-space:nowrap}
+  [dir=ltr] h1,[dir=ltr] .mark,[dir=ltr] p{letter-spacing:-.015em}
+</style></head><body>
+<div class="card" id="card"><div class="glow"></div><div class="inner">
+  <div class="rule"></div>
+  <div><div class="mark" id="mark"></div><h1 id="title"></h1><p id="tag"></p></div>
+  <div class="chips" id="chips"></div>
+</div></div>
+<script>
+  const L = new URLSearchParams(location.search).get("l") === "en" ? "en" : "ar";
+  const D = {
+    ar:{dir:"rtl",mark:"فلوفو",title:"خارطة طريق فلوفو",
+        tag:"تابع ما نعمل عليه الآن وما هو قادم، وشاركنا ما تحتاجه.",
+        chips:["قيد الدراسة","مخطط لها","قيد التنفيذ","تم الإطلاق"]},
+    en:{dir:"ltr",mark:"Flovoo",title:"Flovoo Roadmap",
+        tag:"Follow what we're building now and what comes next — and tell us what you need.",
+        chips:["Under review","Planned","In progress","Shipped"]},
+  }[L];
+  const c = document.getElementById("card");
+  c.setAttribute("dir", D.dir);
+  document.getElementById("mark").textContent = D.mark;
+  document.getElementById("title").textContent = D.title;
+  document.getElementById("tag").textContent = D.tag;
+  document.getElementById("chips").innerHTML =
+    D.chips.map(t => `<span class="chip">${t}</span>`).join("");
+</script></body></html>

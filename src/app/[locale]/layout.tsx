@@ -8,6 +8,7 @@ import { AuthNotice } from "@/components/account/AuthNotice";
 import { DIRECTION, LOCALES, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { siteUrl } from "@/lib/site";
 
 /*
  * Root layout. Every route lives under `/[locale]`, so `lang` and `dir` are set
@@ -50,6 +51,9 @@ export async function generateMetadata({
   const dict = getDictionary(locale);
 
   return {
+    // Without this the share card's image stays relative, and every scraper
+    // that fetches the page from outside drops it.
+    metadataBase: siteUrl(),
     title: { default: dict.site.title, template: `%s · ${dict.site.name}` },
     description: dict.site.metaDescription,
     alternates: {
@@ -59,8 +63,27 @@ export async function generateMetadata({
     openGraph: {
       title: dict.site.title,
       description: dict.site.metaDescription,
+      siteName: dict.site.name,
+      url: `/${locale}`,
       locale: locale === "ar" ? "ar_EG" : "en_US",
       type: "website",
+      // Rendered in a real browser rather than generated at request time:
+      // Satori reverses Arabic word order, which no amount of styling fixes.
+      // Regenerate with tools/og-card.html — see the README.
+      images: [
+        {
+          url: `/og-${locale}.png`,
+          width: 1200,
+          height: 630,
+          alt: dict.site.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.site.title,
+      description: dict.site.metaDescription,
+      images: [`/og-${locale}.png`],
     },
   };
 }
