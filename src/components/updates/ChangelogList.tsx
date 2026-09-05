@@ -11,13 +11,14 @@ import { useDismissable } from "@/components/ui/useDismissable";
 import type { Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import { CHANGELOG_KINDS, type ChangelogKind } from "@/lib/types";
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 
 export interface ChangelogEntryView {
   id: string;
   kind: ChangelogKind;
   title: string;
-  paragraphs: string[];
+  /** The body, already rendered on the server by the block renderer. */
+  body: ReactNode;
   dateLabel: string;
   dateTime: string;
   imageUrl: string | null;
@@ -147,11 +148,9 @@ export function ChangelogList({
                 </div>
 
                 <div className="mt-4">
-                  <EntryBody
-                    id={`entry-body-${entry.id}`}
-                    paragraphs={entry.paragraphs}
-                    moreLabel={dict.updates.continueReading}
-                  />
+                  <EntryBody id={`entry-body-${entry.id}`} moreLabel={dict.updates.continueReading}>
+                    {entry.body}
+                  </EntryBody>
                 </div>
 
                 {entry.articleUrl ? (

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Inbox, LayoutGrid, Megaphone } from "lucide-react";
+import { BookOpen, Inbox, LayoutGrid, Megaphone } from "lucide-react";
 
 import type { Locale } from "@/i18n/config";
 
-/** The two admin surfaces, with the moderation queue carrying its backlog. */
+/** The admin surfaces, with the moderation queue carrying its backlog. */
 export function AdminNav({
   locale,
   pending,
@@ -14,7 +14,7 @@ export function AdminNav({
 }: {
   locale: Locale;
   pending: number;
-  labels: { board: string; submissions: string; changelog: string };
+  labels: { board: string; submissions: string; changelog: string; helpCenter: string };
 }) {
   const pathname = usePathname();
   const tabs = [
@@ -30,6 +30,13 @@ export function AdminNav({
       href: `/${locale}/admin/changelog`,
       label: labels.changelog,
       Icon: Megaphone,
+      exact: false,
+      badge: 0,
+    },
+    {
+      href: `/${locale}/admin/help`,
+      label: labels.helpCenter,
+      Icon: BookOpen,
       exact: false,
       badge: 0,
     },

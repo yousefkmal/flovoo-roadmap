@@ -1,3 +1,4 @@
+import { plainToDoc } from "../changelog/body.ts";
 import type { Category, ChangelogEntry, Feature } from "@/lib/types";
 
 /**
@@ -367,11 +368,16 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     kind: "new",
     title_ar: "أطلقنا الرد السريع بالاختصارات",
     title_en: "Saved replies with shortcuts are live",
-    body_ar:
-      "احفظ ردودك المتكررة واستدعها بكتابة «/» متبوعة باختصار قصير. يوفّر ذلك على فرق الدعم آلاف الضغطات أسبوعيًا.\n\nيمكنك إنشاء الردود من الإعدادات ومشاركتها مع الفريق كله أو إبقاؤها خاصة بك. الردود تدعم المتغيرات، فيمكنك إدراج اسم العميل أو رقم الطلب تلقائيًا داخل النص.\n\nوإذا كان لديك أكثر من لغة، أنشئ نسخة عربية وأخرى إنجليزية للاختصار نفسه، وسيختار فلوفو المناسبة حسب لغة المحادثة.",
-    body_en:
-      "Save your repeated answers and recall them by typing “/” plus a short shortcut. Thousands of keystrokes saved per week.\n\nCreate replies from settings and share them with the whole team or keep them to yourself. Replies support variables, so a customer's name or an order number can be dropped into the text automatically.\n\nIf you work in more than one language, write an Arabic and an English version of the same shortcut and Flovoo picks the right one for the conversation.",
+    body_ar: plainToDoc(
+      "احفظ ردودك المتكررة واستدعها بكتابة «/» متبوعة باختصار قصير. يوفّر ذلك على فرق الدعم آلاف الضغطات أسبوعيًا.\n\nيمكنك إنشاء الردود من الإعدادات ومشاركتها مع الفريق كله أو إبقاؤها خاصة بك. الردود تدعم المتغيرات، فيمكنك إدراج اسم العميل أو رقم الطلب تلقائيًا داخل النص.\n\nوإذا كان لديك أكثر من لغة، أنشئ نسخة عربية وأخرى إنجليزية للاختصار نفسه، وسيختار فلوفو المناسبة حسب لغة المحادثة."
+    ),
+    body_en: plainToDoc(
+      "Save your repeated answers and recall them by typing “/” plus a short shortcut. Thousands of keystrokes saved per week.\n\nCreate replies from settings and share them with the whole team or keep them to yourself. Replies support variables, so a customer's name or an order number can be dropped into the text automatically.\n\nIf you work in more than one language, write an Arabic and an English version of the same shortcut and Flovoo picks the right one for the conversation."
+    ),
     image_url: "/updates/saved-replies.svg",
+    image_url_en: null,
+    cover_alt_needs_review: false,
+    body_has_draft_alt: false,
     image_alt_ar:
       "قائمة ردود محفوظة تظهر فوق مربع الكتابة، وبجانبه زر الاختصار «/».",
     image_alt_en:
@@ -389,11 +395,16 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     kind: "new",
     title_ar: "إنستغرام المباشر وصل إلى صندوق الوارد",
     title_en: "Instagram Direct has landed in your inbox",
-    body_ar:
-      "الرسائل المباشرة والتعليقات أصبحت في المكان نفسه مع واتساب وماسنجر والرسائل النصية.\n\nاربط حسابك من صفحة القنوات، وستبدأ الرسائل بالوصول خلال دقائق. التعليقات على منشوراتك تظهر كمحادثات أيضًا، فيمكن لفريقك الرد عليها ثم متابعة الحديث في الخاص دون مغادرة فلوفو.",
-    body_en:
-      "Direct messages and comments now sit alongside WhatsApp, Messenger, and SMS in one place.\n\nConnect your account from the channels page and messages start arriving within minutes. Comments on your posts show up as conversations too, so your team can reply and then continue in DMs without leaving Flovoo.",
+    body_ar: plainToDoc(
+      "الرسائل المباشرة والتعليقات أصبحت في المكان نفسه مع واتساب وماسنجر والرسائل النصية.\n\nاربط حسابك من صفحة القنوات، وستبدأ الرسائل بالوصول خلال دقائق. التعليقات على منشوراتك تظهر كمحادثات أيضًا، فيمكن لفريقك الرد عليها ثم متابعة الحديث في الخاص دون مغادرة فلوفو."
+    ),
+    body_en: plainToDoc(
+      "Direct messages and comments now sit alongside WhatsApp, Messenger, and SMS in one place.\n\nConnect your account from the channels page and messages start arriving within minutes. Comments on your posts show up as conversations too, so your team can reply and then continue in DMs without leaving Flovoo."
+    ),
     image_url: "/updates/instagram-inbox.svg",
+    image_url_en: null,
+    cover_alt_needs_review: false,
+    body_has_draft_alt: false,
     image_alt_ar:
       "أربع قنوات على اليمين تتجمع خطوطها في صندوق وارد واحد على اليسار.",
     image_alt_en:
@@ -411,11 +422,16 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     kind: "improved",
     title_ar: "أدوار وصلاحيات لفريقك بالكامل",
     title_en: "Roles and permissions for your whole team",
-    body_ar:
-      "أضف زملاءك بأدوار مختلفة، وحدّد بدقة من يرى ماذا ومن يمكنه الرد على من.\n\nثلاثة أدوار جاهزة: مدير يرى كل شيء، وموظف دعم يرى المحادثات المسندة إليه وفريقه، ومراقب يقرأ دون أن يرد. يمكنك تغيير دور أي عضو في أي وقت دون التأثير على المحادثات الجارية.",
-    body_en:
-      "Invite colleagues with distinct roles and control exactly who sees what and who can reply to whom.\n\nThree roles out of the box: an admin who sees everything, an agent who sees their own and their team's conversations, and a viewer who reads without replying. Change anyone's role at any time without disturbing conversations in flight.",
+    body_ar: plainToDoc(
+      "أضف زملاءك بأدوار مختلفة، وحدّد بدقة من يرى ماذا ومن يمكنه الرد على من.\n\nثلاثة أدوار جاهزة: مدير يرى كل شيء، وموظف دعم يرى المحادثات المسندة إليه وفريقه، ومراقب يقرأ دون أن يرد. يمكنك تغيير دور أي عضو في أي وقت دون التأثير على المحادثات الجارية."
+    ),
+    body_en: plainToDoc(
+      "Invite colleagues with distinct roles and control exactly who sees what and who can reply to whom.\n\nThree roles out of the box: an admin who sees everything, an agent who sees their own and their team's conversations, and a viewer who reads without replying. Change anyone's role at any time without disturbing conversations in flight."
+    ),
     image_url: "/updates/roles-permissions.svg",
+    image_url_en: null,
+    cover_alt_needs_review: false,
+    body_has_draft_alt: false,
     image_alt_ar:
       "ثلاث بطاقات أدوار، كل واحدة تعرض عدداً أقل من الصلاحيات المفعّلة من التي قبلها.",
     image_alt_en:

@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+
+import { AUTH_RETURN_COOKIE, safeReturnPath } from "@/lib/auth/return-path";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
 import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
@@ -34,28 +36,36 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const rawType = searchParams.get("type") ?? "";
-  const rawNext = searchParams.get("next") ?? "";
   const localeSegment = request.nextUrl.pathname.split("/")[1];
   const locale = isLocale(localeSegment) ? localeSegment : DEFAULT_LOCALE;
 
-  const next =
-    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : `/${locale}`;
+  // The return path arrives in a cookie set when sign-in started; `?next=` is
+  // still honoured for links minted before the cookie existed.
+  const next = safeReturnPath(
+    searchParams.get("next") ?? request.cookies.get(AUTH_RETURN_COOKIE)?.value,
+    `/${locale}`,
+  );
+
+  /** Every exit clears the cookie: the path is for this sign-in only. */
+  const redirect = (url: string) => {
+    const response = NextResponse.redirect(url);
+    response.cookies.set(AUTH_RETURN_COOKIE, "", { path: "/", maxAge: 0 });
+    return response;
+  };
 
   // Supabase reports a rejected link in the query rather than sending a code.
   const providerError = searchParams.get("error_code") ?? searchParams.get("error");
   if (providerError) {
-    return NextResponse.redirect(
-      `${origin}${next}?auth=${encodeURIComponent(providerError)}`,
-    );
+    return redirect(`${origin}${next}?auth=${encodeURIComponent(providerError)}`);
   }
 
   if (!code && !tokenHash) {
-    return NextResponse.redirect(`${origin}${next}?auth=missing_code`);
+    return redirect(`${origin}${next}?auth=missing_code`);
   }
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.redirect(`${origin}${next}?auth=unconfigured`);
+    return redirect(`${origin}${next}?auth=unconfigured`);
   }
 
   const { error } = tokenHash
@@ -73,8 +83,8 @@ export async function GET(request: NextRequest) {
       status: error.status,
       message: error.message,
     });
-    return NextResponse.redirect(`${origin}${next}?auth=failed`);
+    return redirect(`${origin}${next}?auth=failed`);
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  return redirect(`${origin}${next}`);
 }

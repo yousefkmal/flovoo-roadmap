@@ -1,3 +1,4 @@
+import { bodyText } from "@/lib/changelog/body";
 import { NextResponse } from "next/server";
 
 import { getDictionary } from "@/i18n";
@@ -34,14 +35,12 @@ export async function GET(
     .filter((entry) => entry.published_at)
     .map((entry) => {
       const title = locale === "ar" ? entry.title_ar : entry.title_en;
-      const body = (locale === "ar" ? entry.body_ar : entry.body_en) ?? "";
+      // A feed reader wants text, not our block JSON.
+      const body = bodyText(locale === "ar" ? entry.body_ar : entry.body_en);
       // A relative cover path has to be absolute in a feed: readers resolve it
       // against their own origin, not ours.
-      const image = entry.image_url
-        ? entry.image_url.startsWith("http")
-          ? entry.image_url
-          : `${origin}${entry.image_url}`
-        : null;
+      const cover = (locale === "en" ? entry.image_url_en : null) ?? entry.image_url;
+      const image = cover ? (cover.startsWith("http") ? cover : `${origin}${cover}`) : null;
 
       return `    <item>
       <title>${escapeXml(title)}</title>

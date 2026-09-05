@@ -2,7 +2,7 @@
 
 import { useOptimistic, useTransition } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, Pencil, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Pencil, Sparkles, TriangleAlert } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/EmptyState";
 import { KindTag } from "@/components/updates/EntryTag";
@@ -19,6 +19,8 @@ export interface AdminChangelogView {
   dateLabel: string | null;
   /** Written by the system when a feature shipped, and not yet reviewed. */
   isAutoDraft: boolean;
+  /** The cover's alt text, or a figure's, is machine-written and unchecked. */
+  hasUnreviewedAlt: boolean;
 }
 
 /**
@@ -99,6 +101,12 @@ function Row({
             <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-text-tertiary">
               <Sparkles className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
               {dict.admin.changelogDraftedHint}
+            </p>
+          ) : null}
+          {entry.hasUnreviewedAlt ? (
+            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-warning-tint px-2 py-0.5 text-xs font-semibold text-warning-label">
+              <TriangleAlert className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+              {dict.admin.unreviewedAltBadge}
             </p>
           ) : null}
         </div>

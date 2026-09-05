@@ -27,6 +27,7 @@ import {
   isDevAuthEnabled,
 } from "@/lib/auth/dev-session";
 import { localUpsertProfile } from "@/lib/data/local-store";
+import { AUTH_RETURN_COOKIE, AUTH_RETURN_MAX_AGE, safeReturnPath } from "@/lib/auth/return-path";
 import {
   validateDescription,
   validateEmail,
@@ -52,6 +53,22 @@ function revalidateBoard(locale: Locale) {
 function revalidateAll(locale: Locale) {
   revalidatePath(`/${locale}`);
   revalidatePath(`/${locale}/updates`);
+}
+
+/**
+ * Keeps the page to return to in a short-lived cookie rather than on the
+ * callback URL, so the callback matches the Supabase allow list exactly.
+ * See `lib/auth/return-path.ts`.
+ */
+async function rememberReturnPath(locale: string, next: string) {
+  const store = await cookies();
+  store.set(AUTH_RETURN_COOKIE, safeReturnPath(next, `/${locale}`), {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: AUTH_RETURN_MAX_AGE,
+    secure: process.env.NODE_ENV === "production",
+  });
 }
 
 /** Coarse, hashed, and only used for rate limiting — never stored in the clear. */
@@ -86,7 +103,8 @@ export async function googleSignInAction(
   if (!supabase) return { error: "unconfigured" };
 
   const origin = (await headers()).get("origin") ?? "";
-  const redirectTo = `${origin}/${locale}/auth/callback?next=${encodeURIComponent(next)}`;
+  await rememberReturnPath(locale, next);
+  const redirectTo = `${origin}/${locale}/auth/callback`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -122,10 +140,11 @@ export async function emailSignInAction(
 
   if (supabase) {
     const origin = (await headers()).get("origin") ?? "";
+    await rememberReturnPath(locale, next);
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${origin}/${locale}/auth/callback?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: `${origin}/${locale}/auth/callback`,
         data: name.trim() ? { full_name: name.trim() } : undefined,
       },
     });

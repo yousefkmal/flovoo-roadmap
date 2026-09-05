@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" role="img">
+  <defs>
+    <linearGradient id="wa-accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2EA8FF"/><stop offset="50%" stop-color="#4D6BFB"/><stop offset="100%" stop-color="#7A5AF8"/>
+    </linearGradient>
+    <filter id="wa-shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#17244F" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" fill="#F7F8FB"/>
+  <!-- app behind -->
+  <rect x="80" y="60" width="1040" height="600" rx="20" fill="#FFFFFF" stroke="#E6E9F2"/>
+  <rect x="80" y="60" width="220" height="600" rx="20" fill="#F7F8FB"/>
+  <rect x="80" y="60" width="220" height="600" fill="#F7F8FB"/>
+  <line x1="300" y1="60" x2="300" y2="660" stroke="#E6E9F2"/>
+  <rect x="108" y="100" width="120" height="14" rx="7" fill="#17244F"/>
+  <rect x="108" y="150" width="164" height="12" rx="6" fill="#98A2B8" opacity="0.5"/>
+  <rect x="108" y="180" width="140" height="12" rx="6" fill="#98A2B8" opacity="0.5"/>
+  <rect x="100" y="204" width="180" height="28" rx="8" fill="#EDF0FF"/>
+  <rect x="108" y="212" width="150" height="12" rx="6" fill="#4D6BFB"/>
+  <rect x="108" y="250" width="120" height="12" rx="6" fill="#98A2B8" opacity="0.5"/>
+  <!-- dialog -->
+  <rect x="380" y="130" width="600" height="460" rx="16" fill="#FFFFFF" stroke="#E6E9F2" filter="url(#wa-shadow)"/>
+  <circle cx="430" cy="180" r="20" fill="#25D366"/>
+  <path d="M421 180c0-5 4-9 9-9s9 4 9 9-4 9-9 9c-2 0-3 0-5-1l-4 1 1-4c-1-1-1-3-1-5z" fill="#FFFFFF"/>
+  <rect x="464" y="170" width="240" height="18" rx="6" fill="#17244F"/>
+  <rect x="464" y="196" width="320" height="10" rx="5" fill="#98A2B8" opacity="0.6"/>
+  <line x1="380" y1="232" x2="980" y2="232" stroke="#E6E9F2"/>
+  <!-- account list -->
+  <rect x="412" y="256" width="120" height="10" rx="5" fill="#667085"/>
+  <rect x="412" y="276" width="536" height="52" rx="10" fill="#EDF0FF" stroke="#4D6BFB" stroke-width="2"/>
+  <circle cx="440" cy="302" r="12" fill="#4D6BFB"/>
+  <rect x="464" y="296" width="180" height="12" rx="6" fill="#1F2430"/>
+  <circle cx="922" cy="302" r="9" fill="#4D6BFB"/><path d="M917 302l4 4 7-8" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+  <rect x="412" y="336" width="536" height="52" rx="10" fill="#FFFFFF" stroke="#E6E9F2"/>
+  <circle cx="440" cy="362" r="12" fill="#E6E9F2"/>
+  <rect x="464" y="356" width="140" height="12" rx="6" fill="#98A2B8"/>
+  <!-- phone field -->
+  <rect x="412" y="416" width="90" height="10" rx="5" fill="#667085"/>
+  <rect x="412" y="434" width="536" height="46" rx="6" fill="#FFFFFF" stroke="#E6E9F2"/>
+  <rect x="428" y="450" width="40" height="14" rx="4" fill="#E6E9F2"/>
+  <text x="480" y="463" font-family="ui-monospace, monospace" font-size="16" fill="#1F2430">+966 5X XXX XXXX</text>
+  <!-- buttons -->
+  <rect x="770" y="516" width="178" height="44" rx="10" fill="url(#wa-accent)"/>
+  <rect x="820" y="533" width="78" height="10" rx="5" fill="#FFFFFF"/>
+  <rect x="640" y="516" width="116" height="44" rx="10" fill="#FFFFFF" stroke="#E6E9F2"/>
+  <rect x="674" y="533" width="48" height="10" rx="5" fill="#667085"/>
+</svg>

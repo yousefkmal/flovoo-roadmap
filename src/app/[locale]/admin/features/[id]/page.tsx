@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
 import { getFeatureById } from "@/lib/data/admin-repository";
 import { getCategories } from "@/lib/data/repository";
+import { requireAdminPage } from "@/lib/auth/admin";
 
 /**
  * One route for both creating and editing: `/admin/features/new` renders an
@@ -16,6 +17,7 @@ export default async function FeatureEditorPage({
 }: PageProps<"/[locale]/admin/features/[id]">) {
   const { locale, id } = await params;
   if (!isLocale(locale)) notFound();
+  await requireAdminPage();
 
   const dict = getDictionary(locale);
   const categories = await getCategories();

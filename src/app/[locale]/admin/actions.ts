@@ -1,5 +1,7 @@
 "use server";
 
+import { isChangelogBody } from "@/lib/changelog/body";
+import { toPlainText } from "@/lib/help/blocks";
 import { revalidatePath } from "next/cache";
 
 import { isLocale, type Locale } from "@/i18n/config";
@@ -284,13 +286,34 @@ function readChangelogInput(formData: FormData, featureIds: string[]): Changelog
     return isSafeHttpUrl(value) ? value : null;
   };
 
+  /**
+   * A body arrives as JSON from the block editor. Anything unparseable, or
+   * anything that is not a document, becomes an empty one rather than reaching
+   * the database — the column's own check would reject it anyway, and losing
+   * the save with a database error tells an editor nothing.
+   */
+  const body = (name: string) => {
+    const raw = String(formData.get(name) ?? "").trim();
+    if (!raw) return null;
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return isChangelogBody(parsed) && toPlainText(parsed).trim() ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
   return {
     kind: isKind(kind) ? kind : "new",
     title_ar: String(formData.get("title_ar") ?? "").trim(),
     title_en: String(formData.get("title_en") ?? "").trim(),
-    body_ar: text("body_ar"),
-    body_en: text("body_en"),
+    body_ar: body("body_ar"),
+    body_en: body("body_en"),
     image_url: url("image_url"),
+    image_url_en: url("image_url_en"),
+    // The editor sends the resulting state: it flips to false the moment
+    // somebody edits either alt field.
+    cover_alt_needs_review: formData.get("cover_alt_needs_review") === "1",
     image_alt_ar: text("image_alt_ar"),
     image_alt_en: text("image_alt_en"),
     article_url: url("article_url"),

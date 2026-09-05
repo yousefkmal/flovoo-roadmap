@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { Save } from "lucide-react";
 
@@ -9,17 +9,24 @@ import { saveChangelogAction, type ChangelogState } from "@/app/[locale]/admin/a
 import type { Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import { CHANGELOG_KINDS, type ChangelogKind } from "@/lib/types";
+import { BlockEditor } from "@/components/admin/help/editor/BlockEditor";
+import { MediaPicker, type PickerMediaItem } from "@/components/admin/help/editor/MediaPicker";
+import type { PickedImage } from "@/components/admin/help/editor/extensions";
+import type { ChangelogBody } from "@/lib/changelog/body";
 
 export interface ChangelogEditorEntry {
   id: string;
   kind: ChangelogKind;
   titleAr: string;
   titleEn: string;
-  bodyAr: string;
-  bodyEn: string;
+  bodyAr: ChangelogBody;
+  bodyEn: ChangelogBody;
   imageUrl: string;
+  imageUrlEn: string;
   imageAltAr: string;
   imageAltEn: string;
+  /** The cover's alt text is machine-written and nobody has checked it. */
+  coverAltNeedsReview: boolean;
   articleUrl: string;
   actionUrl: string;
   actionLabelAr: string;
@@ -40,17 +47,50 @@ export interface EditorFeatureOption {
  * — an entry is a title and some text; the cover, the links and the linked
  * feature are all things it may or may not have.
  */
+const EMPTY_BODY: ChangelogBody = { type: "doc", content: [] };
+
 export function ChangelogEditor({
   entry,
   features,
+  media,
   locale,
   dict,
 }: {
   entry: ChangelogEditorEntry | null;
   features: EditorFeatureOption[];
+  media: PickerMediaItem[];
   locale: Locale;
   dict: Dictionary;
 }) {
+  // The bodies are block documents (migration 0012). The editor is the help
+  // center's, so a release note gets lists, links and callouts without a
+  // second editor to keep in step. The form still posts them as JSON strings
+  // in hidden fields, which keeps the action's FormData shape unchanged.
+  const [bodyAr, setBodyAr] = useState<ChangelogBody>(entry?.bodyAr ?? EMPTY_BODY);
+  const [bodyEn, setBodyEn] = useState<ChangelogBody>(entry?.bodyEn ?? EMPTY_BODY);
+  // Editing either alt field is the review — the same rule the figure badge in
+  // the block editor follows. A new entry is written by a person, so it starts
+  // reviewed.
+  const [coverAltNeedsReview, setCoverAltNeedsReview] = useState(
+    entry?.coverAltNeedsReview ?? false,
+  );
+  const [library, setLibrary] = useState(media);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerResolve = useRef<((image: PickedImage | null) => void) | null>(null);
+
+  const pickImage = useCallback(() => {
+    setPickerOpen(true);
+    return new Promise<PickedImage | null>((resolve) => {
+      pickerResolve.current = resolve;
+    });
+  }, []);
+
+  function closePicker(image: PickedImage | null) {
+    setPickerOpen(false);
+    pickerResolve.current?.(image);
+    pickerResolve.current = null;
+  }
+
   const [state, formAction, pending] = useActionState<ChangelogState, FormData>(
     saveChangelogAction.bind(null, locale, entry?.id ?? null),
     { status: "idle" },
@@ -124,27 +164,25 @@ export function ChangelogEditor({
         </Field>
 
         <Field id="body_ar" label={dict.admin.fieldBodyAr}>
-          <textarea
-            id="body_ar"
-            name="body_ar"
-            dir="rtl"
-            lang="ar"
-            rows={7}
-            defaultValue={entry?.bodyAr}
-            className={`${FIELD_CLASS} resize-y text-start`}
+          <BlockEditor
+            initial={bodyAr}
+            locale="ar"
+            labels={dict.adminHelp}
+            onChange={setBodyAr}
+            pickImage={pickImage}
           />
+          <input type="hidden" name="body_ar" value={JSON.stringify(bodyAr)} />
         </Field>
 
         <Field id="body_en" label={dict.admin.fieldBodyEn}>
-          <textarea
-            id="body_en"
-            name="body_en"
-            dir="ltr"
-            lang="en"
-            rows={7}
-            defaultValue={entry?.bodyEn}
-            className={`${FIELD_CLASS} resize-y text-start`}
+          <BlockEditor
+            initial={bodyEn}
+            locale="en"
+            labels={dict.adminHelp}
+            onChange={setBodyEn}
+            pickImage={pickImage}
           />
+          <input type="hidden" name="body_en" value={JSON.stringify(bodyEn)} />
         </Field>
       </div>
 
@@ -159,10 +197,28 @@ export function ChangelogEditor({
         />
       </Field>
 
+      {/* Only for an announcement whose English version has its own picture —
+          usually a screenshot of the English interface. Left empty, English
+          shows the cover above. */}
+      <Field id="image_url_en" label={dict.admin.fieldImageUrlEn} hint={dict.admin.imageUrlEnHint}>
+        <input
+          id="image_url_en"
+          name="image_url_en"
+          type="url"
+          dir="ltr"
+          defaultValue={entry?.imageUrlEn}
+          className={`${FIELD_CLASS} text-start`}
+        />
+      </Field>
+
       <div className="grid gap-5 md:grid-cols-2">
         <Field
           id="image_alt_ar"
-          label={dict.admin.fieldImageAltAr}
+          label={
+            coverAltNeedsReview
+              ? `${dict.admin.fieldImageAltAr} — ${dict.adminHelp.figureAltUnreviewed}`
+              : dict.admin.fieldImageAltAr
+          }
           hint={dict.admin.altHint}
         >
           <input
@@ -171,7 +227,8 @@ export function ChangelogEditor({
             dir="rtl"
             lang="ar"
             defaultValue={entry?.imageAltAr}
-            className={`${FIELD_CLASS} text-start`}
+            onChange={() => setCoverAltNeedsReview(false)}
+            className={`${FIELD_CLASS} text-start ${coverAltNeedsReview ? "border-warning-label" : ""}`}
           />
         </Field>
 
@@ -182,9 +239,15 @@ export function ChangelogEditor({
             dir="ltr"
             lang="en"
             defaultValue={entry?.imageAltEn}
-            className={`${FIELD_CLASS} text-start`}
+            onChange={() => setCoverAltNeedsReview(false)}
+            className={`${FIELD_CLASS} text-start ${coverAltNeedsReview ? "border-warning-label" : ""}`}
           />
         </Field>
+        <input
+          type="hidden"
+          name="cover_alt_needs_review"
+          value={coverAltNeedsReview ? "1" : "0"}
+        />
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -261,6 +324,17 @@ export function ChangelogEditor({
           {pending ? dict.admin.saving : dict.admin.save}
         </button>
       </div>
+
+      {/* Same library the help center writes to: one media store for the app. */}
+      <MediaPicker
+        open={pickerOpen}
+        items={library}
+        locale={locale}
+        dict={dict}
+        onPick={closePicker}
+        onClose={() => closePicker(null)}
+        onUploaded={(item) => setLibrary((current) => [item, ...current])}
+      />
     </form>
   );
 }

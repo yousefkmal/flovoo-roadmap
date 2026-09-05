@@ -7,15 +7,20 @@ import {
 import { getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
 import { getAllFeatures, getChangelogEntryById } from "@/lib/data/admin-repository";
+import { getAdminHelpMedia } from "@/lib/data/help-admin-repository";
+import { mediaPublicUrl } from "@/lib/help/media";
+import { toChangelogBody } from "@/lib/changelog/body";
+import { requireAdminPage } from "@/lib/auth/admin";
 
 export default async function ChangelogEditorPage({
   params,
 }: PageProps<"/[locale]/admin/changelog/[id]">) {
   const { locale, id } = await params;
   if (!isLocale(locale)) notFound();
+  await requireAdminPage();
 
   const dict = getDictionary(locale);
-  const features = await getAllFeatures();
+  const [features, media] = await Promise.all([getAllFeatures(), getAdminHelpMedia()]);
 
   let entry: ChangelogEditorEntry | null = null;
   if (id !== "new") {
@@ -26,11 +31,13 @@ export default async function ChangelogEditorPage({
       kind: found.kind,
       titleAr: found.title_ar,
       titleEn: found.title_en,
-      bodyAr: found.body_ar ?? "",
-      bodyEn: found.body_en ?? "",
+      bodyAr: toChangelogBody(found.body_ar),
+      bodyEn: toChangelogBody(found.body_en),
       imageUrl: found.image_url ?? "",
+      imageUrlEn: found.image_url_en ?? "",
       imageAltAr: found.image_alt_ar ?? "",
       imageAltEn: found.image_alt_en ?? "",
+      coverAltNeedsReview: found.cover_alt_needs_review,
       articleUrl: found.article_url ?? "",
       actionUrl: found.action_url ?? "",
       actionLabelAr: found.action_label_ar ?? "",
@@ -47,6 +54,14 @@ export default async function ChangelogEditorPage({
 
       <ChangelogEditor
         entry={entry}
+        media={media.map((m) => ({
+          id: m.id,
+          url: mediaPublicUrl(m.storage_path),
+          altAr: m.alt_ar ?? "",
+          altEn: m.alt_en ?? "",
+          width: m.width,
+          height: m.height,
+        }))}
         features={features.map((feature) => ({
           id: feature.id,
           title: locale === "ar" ? feature.title_ar : feature.title_en,

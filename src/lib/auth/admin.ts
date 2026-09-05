@@ -1,5 +1,7 @@
 import "server-only";
 
+import { notFound } from "next/navigation";
+
 import { getCurrentUser, type AppUser } from "@/lib/auth/session";
 import { isDevAuthEnabled } from "@/lib/auth/dev-session";
 import { getServiceSupabase } from "@/lib/data/supabase-admin";
@@ -56,4 +58,17 @@ export interface AdminSession {
 export async function getAdminSession(): Promise<AdminSession | null> {
   const user = await getCurrentUser();
   return (await isAdmin(user)) ? { user: user! } : null;
+}
+
+/**
+ * The guard for admin *pages*. The admin layout hides its children when there
+ * is no session, but a page segment still renders on the server and its data
+ * travels in the response payload — draft titles, submitter emails — for
+ * anyone who requests the URL. Calling this first stops the page before it
+ * reads anything; the visitor sees the not-found boundary.
+ */
+export async function requireAdminPage(): Promise<AdminSession> {
+  const session = await getAdminSession();
+  if (!session) notFound();
+  return session;
 }

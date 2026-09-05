@@ -1,3 +1,5 @@
+import type { ChangelogBody } from "@/lib/changelog/body";
+
 /**
  * Domain types. These mirror the Postgres schema in
  * `supabase/migrations/0001_init.sql` one-to-one, so the seed data and a live
@@ -71,9 +73,16 @@ export interface ChangelogEntry {
   kind: ChangelogKind;
   title_ar: string;
   title_en: string;
-  body_ar: string | null;
-  body_en: string | null;
+  /** ProseMirror JSON since migration 0012; the help center's block model. */
+  body_ar: ChangelogBody | null;
+  body_en: ChangelogBody | null;
   image_url: string | null;
+  /** English cover, when it differs. Null means English uses `image_url`. */
+  image_url_en: string | null;
+  /** True while the cover's alt text is machine-written (migration 0014). */
+  cover_alt_needs_review: boolean;
+  /** Generated: a figure in either body still carries a machine-written alt. */
+  body_has_draft_alt: boolean;
   image_alt_ar: string | null;
   image_alt_en: string | null;
   /** "Read more" — the full write-up, wherever it lives. */

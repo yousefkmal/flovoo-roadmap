@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { PageHeading } from "@/components/PageHeading";
 import { SiteFooter } from "@/components/SiteFooter";
+import { helpHomeHref } from "@/lib/help/paths";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   ChangelogList,
@@ -20,6 +21,8 @@ import {
   getShippedFeatures,
 } from "@/lib/data/repository";
 import { formatDate } from "@/lib/format";
+import { ArticleBody } from "@/components/help/ArticleBody";
+import { bodyText, toChangelogBody } from "@/lib/changelog/body";
 import { isSafeHttpUrl } from "@/lib/validation";
 
 /** Reactions are live and the subscribe state is per-person; never prerendered. */
@@ -77,7 +80,7 @@ export default async function UpdatesPage({ params }: PageProps<"/[locale]/updat
     .filter((entry) => entry.published_at)
     .map((entry) => {
       const title = locale === "ar" ? entry.title_ar : entry.title_en;
-      const body = (locale === "ar" ? entry.body_ar : entry.body_en) ?? "";
+      const doc = toChangelogBody(locale === "ar" ? entry.body_ar : entry.body_en);
       const alt = locale === "ar" ? entry.image_alt_ar : entry.image_alt_en;
       const actionLabel =
         (locale === "ar" ? entry.action_label_ar : entry.action_label_en) ??
@@ -87,12 +90,16 @@ export default async function UpdatesPage({ params }: PageProps<"/[locale]/updat
         id: entry.id,
         kind: entry.kind,
         title,
-        // Bodies are stored as plain text with blank lines between paragraphs;
-        // splitting here keeps the renderer free of any HTML from the database.
-        paragraphs: body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean),
+        // Bodies are the help center's block documents (migration 0012) and are
+        // rendered by the same component, so a release note can carry a list or
+        // a link without a second renderer to keep in step. Rendered here, on
+        // the server, and handed to the list as a node.
+        body: <ArticleBody body={doc} dict={dict} />,
         dateLabel: formatDate(entry.published_at!, locale),
         dateTime: entry.published_at!,
-        imageUrl: entry.image_url,
+        // Arabic is the default cover; English falls back to it when the
+        // announcement has no cover of its own (migration 0013).
+        imageUrl: (locale === "en" ? entry.image_url_en : null) ?? entry.image_url,
         // Falling back to the title is better than an empty alt on an image
         // that carries meaning.
         imageAlt: alt ?? title,
@@ -105,7 +112,7 @@ export default async function UpdatesPage({ params }: PageProps<"/[locale]/updat
         actionUrl: isSafeHttpUrl(entry.action_url) ? entry.action_url : null,
         actionLabel,
         reactions: reactions.get(entry.id) ?? [],
-        haystack: `${title} ${body}`.toLowerCase(),
+        haystack: `${title} ${bodyText(doc)}`.toLowerCase(),
       };
     });
 
@@ -160,7 +167,11 @@ export default async function UpdatesPage({ params }: PageProps<"/[locale]/updat
         />
       </main>
 
-      <SiteFooter locale={locale} updatedAt={lastPublished} />
+      <SiteFooter
+        locale={locale}
+        updatedAt={lastPublished}
+        links={[{ label: dict.help.badge, href: helpHomeHref(locale) }]}
+      />
     </>
   );
 }

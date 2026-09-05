@@ -503,6 +503,218 @@ title or tagline changes; nothing does it automatically.
 falls back to Vercel's project domain, which serves the image correctly but
 puts the wrong host in `og:url`. Set it to the canonical domain.
 
+## Help center
+
+The help center (`help.flovoo.com`) is the same app, served from a second host,
+sharing the Supabase project, the admin, the design tokens and the dictionaries.
+Its brief is `flovoo-help-center-build-prompt.md`; it is built in phases and
+each phase stops for review.
+
+**Phase 1 — foundation and public reading experience — is complete.**
+
+| Route | |
+|---|---|
+| `/[locale]/help` | home: hero search, topic cards with counts, "most read", escalation card |
+| `/[locale]/help/categories/[slug]` | one topic and its articles |
+| `/[locale]/help/articles/[slug]` | the article: breadcrumbs, outline rail, block body, lightbox, prev/next |
+
+Locally these are the addresses. In production `NEXT_PUBLIC_HELP_URL` names
+the help host, `src/proxy.ts` rewrites `help.flovoo.com/ar/articles/…` onto
+`/ar/help/articles/…`, and every link is built by `src/lib/help/paths.ts` so
+the HTML points at the public address either way.
+
+Things worth knowing:
+
+- **The content model** is `help_collections` → `help_articles` →
+  `help_article_translations`, one translation row per language with its own
+  slug, title, excerpt and meta. Slugs are verbatim Arabic on the Arabic side.
+  Bodies are Tiptap-compatible ProseMirror JSON so Phase 3's editor saves
+  exactly what Phase 1 renders. The custom nodes are documented in
+  `src/lib/help/blocks.ts`.
+- **Derived columns.** `body_plain` (search, RAG), `toc` and `reading_minutes`
+  are computed from the body by `deriveArticleMeta()` — by the seed generator
+  now, by the save action later. The database stores them; nobody edits them.
+- **Static with ISR.** The pages read no session and revalidate in the
+  background every five minutes. Phase 3 adds on-demand revalidation on publish.
+- **A persistent topic sidebar on every page**, added at the Phase 1 review
+  (the brief's "no sidebar on the homepage" was the author's own correction).
+  It lists every topic, opens the current one to show its articles and
+  highlights the one being read. It is anchored to the inline-start edge of
+  the viewport — right in Arabic, left in English — and on small screens folds
+  into the header's menu button. The header's search field sits centred as its
+  primary element.
+- **Category pages group articles into cards by section**, one single-line row
+  per article with a mirrored chevron, the reference's structure in Flovoo
+  styling. Sections are an optional bilingual label on the article.
+- **Later, not now:** a "Dashboard" button in the help header for signed-in
+  team members, as Chatbase's docs have. Noted at the Phase 1 review for a
+  future phase; nothing is built for it.
+- **On-device testing in development** needs `allowedDevOrigins` in
+  `next.config.ts` (set for private network ranges). Without it the dev server
+  blocks its own scripts for a phone on the same Wi-Fi and every control on the
+  page is inert — which is exactly how a "broken menu button" presented.
+- **Help pages use the system's primary text colour** (#1F2430) rather than the
+  roadmap's lighter measured value: a `.help-surface` wrapper scopes the
+  override, so body copy sits at 16:1 and secondary text at 6.9:1 on white.
+- **The outline rail mirrors with the page** at the inline end, opposite the
+  sidebar: left in Arabic, right in English. It appears from 1280px up, where
+  three columns fit; below that the outline is the accordion under the title.
+- **Density was tightened after review** toward the reference's proportions,
+  within the Flovoo scale: body 14px (Arabic 15px over 1.75), article title 24px,
+  section headings 20px, card padding 20px, 12px grid gaps.
+- **Language switching from an article** goes to the same article in the other
+  language when it exists, and otherwise to its topic with `?missing=1`, which
+  the topic page turns into a notice. The seed includes one Arabic-only article
+  to exercise this.
+- **Search is not built yet.** The hero and header fields are real GET forms
+  posting to `/help/search`, so the layout is final; until Phase 2 a submit
+  lands on the help center's 404 page.
+- **Screenshots in the seed are drawn SVG placeholders** under `public/help/`.
+  Real captures arrive through the media library in Phase 3.
+- **The escalation card** reads `NEXT_PUBLIC_HELP_CHAT_URL` and
+  `NEXT_PUBLIC_HELP_WHATSAPP_URL`; each button renders only when its address is
+  set. Which of the two to use is an open decision in the brief.
+- Two semantic tint tokens (`--color-warning-tint/label`,
+  `--color-success-tint/label`) were added for the callouts. The admin nav
+  already referenced the warning pair without it being defined, so those badges
+  gain their colour as a side effect.
+
+### Phase 2 — search and feedback
+
+Built for Arabic first (brief §6). Both the indexed text and the query pass
+through one normalizer — `normalizeForSearch()` in TypeScript,
+`help_normalize()` in SQL — so "ربط الواتساب" finds "ربط واتساب بفلوفو" and
+"الحملات" matches "حملات". `npm test` pins the normalizer to those cases.
+
+- **Instant results** appear under the search box after a short pause, with
+  the matching words marked; Enter or "See all results" opens the results page
+  at `/[locale]/help/search?q=…`. The box is a real form, so it works before
+  any script runs.
+- **Ranking** is trigram similarity on the normalized title and text (title
+  boosted), merged with embedding similarity over article chunks when an
+  embedding provider is configured. Without one, search is lexical only and
+  still tolerant of typos, hamza, ta marbuta and the definite article.
+- **Every search is logged** with its result count; the search box logs the
+  query the reader settled on, not each keystroke. Zero-result queries feed the
+  Phase 5 content-gap inbox. Result clicks are attributed to the logged query.
+- **"Was this helpful?"** at the end of each article. A "no" asks for an
+  optional line about what was missing. Anonymous, rate limited per hashed
+  visitor, remembered in the browser.
+- **Related articles** after each article: same topic first, then closest text.
+- **Migration 0006** adds `pg_trgm`, `vector`, the normalizer, a generated
+  `search_text` column with a trigram index, `help_article_chunks` (1536-wide,
+  filled in Phase 5) and the `help_search()` / `help_related()` functions.
+
+Without Supabase the same ranking runs over the seed in process, so results
+order locally the way they will in production. The embedding provider is set
+with `HELP_EMBEDDING_API_KEY`, `HELP_EMBEDDING_MODEL` and
+`HELP_EMBEDDING_BASE_URL` (any OpenAI-shaped embeddings endpoint); the model
+decision is still open and nothing depends on it yet.
+
+### Phase 3 — admin
+
+A "مركز المساعدة" tab in the existing admin, with three surfaces:
+
+- **Articles** — every article with its status, topic, language coverage and
+  last edit; filters in the URL; bulk publish, move to draft or archive.
+- **Editor** — Arabic and English tabs, each with title, slug (with a
+  suggestion from the title), excerpt, search-engine title and description,
+  and a block editor: headings, lists, numbered steps, callouts, images from
+  the media library, YouTube/Vimeo, tables, FAQ accordions, links and an
+  LTR span for numbers and IDs. A live preview renders the public article
+  component at desktop or phone width in the tab's language. Settings cover
+  topic, status, pin, order, section and icon. Arabic is required; English may
+  be left for later.
+- **Topics** — create, edit, drag to reorder (with keyboard alternatives),
+  delete only when empty, icon picker from the allow-list.
+- **Media** — upload PNG/JPG/WebP/GIF/SVG up to 8 MB, alt text per language,
+  usage count, delete only when unused, copy link.
+
+Publishing revalidates every help page in both languages, so a change is live
+within seconds. Migration 0007 creates the `help-media` Storage bucket and its
+policies.
+
+### Admin guard, three layers
+
+While building the help-center admin we found that the admin layout's guard
+only hid the interface: Next renders a page segment on the server even when
+the layout does not place it, so an unauthenticated request to any admin URL
+received the page's data in the response payload. Every admin page now calls
+`requireAdminPage()` before it reads anything, in addition to the layout guard
+and the per-action check. Verified by requesting the pages without a session
+and confirming no article or submission data is present.
+
+### Phase 4 — SEO and redirects
+
+- Every help page carries canonical, hreflang pairs with `x-default`, Open
+  Graph and Twitter cards, and JSON-LD: `TechArticle` and `BreadcrumbList` on
+  articles, `FAQPage` when an article has FAQ blocks, `WebSite` with a
+  `SearchAction` on the home.
+- **Share cards are generated**: `/api/og/help?locale=…&title=…&kicker=…`
+  draws the title over the Flovoo gradient. It is SVG rasterised with resvg,
+  which shapes Arabic correctly — the reason it is not Next's `ImageResponse`.
+  An image uploaded for the article takes precedence.
+- **Sitemaps per language** at `/sitemap/ar.xml` and `/sitemap/en.xml`,
+  referenced from `/robots.txt`, refreshed on publish. The admin, the API and
+  search results are disallowed for crawlers.
+- **Redirects from Intercom.** The admin's "إعادة التوجيه" screen adds one
+  redirect at a time or imports a CSV (full Intercom URLs accepted), shows hit
+  counts, and lists the addresses readers reached that matched nothing so they
+  can become redirects. An old article or topic URL is followed with a 301 and
+  counted; any other unknown help URL is recorded and sent to search with the
+  old slug as the query.
+- Images in article bodies must carry alt text to save.
+
+Migration 0008 adds `help_not_found` and the two functions the public pages
+call. Lighthouse could not be run in this environment; the on-page SEO
+requirements were verified by inspecting the served HTML.
+
+### Phase 5 — analytics and RAG
+
+**The dashboard** (`/[locale]/admin/help/analytics`) reads plain SQL aggregates,
+first-party only, no third-party tracker and no PII: reads over 7/30/90 days
+split by language, top articles, top and zero-result searches, search
+click-through, helpfulness per article with views beside it, and redirect
+health. A read is counted by a beacon from the article page, keyed by a random
+session id the browser forgets when the tab closes.
+
+**The content-gap inbox** joins zero-result searches to "not helpful"
+feedback. Each item is dismissed or turned into a draft — which opens the
+editor with the question already in the title, since the question is usually
+the better headline.
+
+**Retrieval.** On publish, an article's plain text is split into ~500-token
+overlapping passages, embedded, and stored in `help_article_chunks` with the
+model that produced each row, so changing model is a targeted re-embed rather
+than a guess. Unpublishing deletes the chunks. Embedding failures never fail a
+save: the article is still published, still readable, still findable lexically.
+
+#### The AI Agent read contract, v1
+
+Stable: fields may be added, never removed or renamed. A breaking change gets
+`/api/agent/v2`. Set `HELP_AGENT_API_KEY` to require
+`Authorization: Bearer …`; unset, the endpoints are open (the content is
+public) and rate limited either way.
+
+```
+GET /api/agent/v1/articles?locale=ar&limit=50&offset=0
+→ { version, total, limit, offset, next_offset, articles: [
+      { id, language, slug, title, excerpt, body_markdown, url,
+        collection: { slug, name }, published_at, updated_at } ] }
+
+GET /api/agent/v1/search?q=…&locale=ar&limit=6
+→ { version, query, locale, retrieval: "semantic" | "lexical", passages: [
+      { article_id, language, title, url, content, similarity } ] }
+```
+
+`url` is the public article address, for citing "اقرأ المزيد". `retrieval`
+says which path answered: `semantic` when embeddings are configured and a
+passage cleared the similarity floor, `lexical` otherwise — the agent is never
+left with nothing because a vendor key is missing. For anything talking to
+Postgres directly the same data is in the `help_agent_articles` and
+`help_agent_chunks` views, and `help_agent_retrieve()` is the nearest-passage
+function.
+
 ## Still to come
 
 - **Email delivery.** `notification_outbox` fills correctly on every ship, but

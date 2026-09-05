@@ -1,0 +1,10 @@
+{
+"052": {"ar":"لقطة من Flovoo وعليها نافذة «بدء محادثة جديدة» مع بحث عن جهة الاتصال بالاسم أو رقم الهاتف وقائمة النتائج.","en":"A Flovoo screen with the Start a new conversation dialog, searching contacts by name or phone number with the results listed."},
+"053": {"ar":"لقطتان من صفحة المحادثات في Flovoo: لوحة الفلاتر الكاملة، ولوحة المرشحات السريعة «غير مقروءة» و«لم يتم الرد» بإطار أحمر.","en":"Two Flovoo Chats screens: the full filter panel, and the quick filters panel with Unread and Not replied outlined in red."},
+"054": {"ar":"لقطة من صفحة جهات الاتصال في Flovoo ولوحة «تخصيص الأعمدة» مفتوحة بإطار أحمر.","en":"The Flovoo contacts page with the Customize columns panel open and outlined in red."},
+"055": {"ar":"لقطة من صفحة جهات الاتصال في Flovoo وإطار أحمر حول أعمدة نوع المصدر ورابط الإعلان ومعرّف الإعلان.","en":"The Flovoo contacts table with the source type, ad link and ad ID columns outlined in red."},
+"056": {"ar":"لقطة من قائمة المحادثات في Flovoo وقائمة الخيارات مفتوحة تعرض «Add tag» و«Bulk select».","en":"The Flovoo chat list with a conversation's options menu open showing Add tag and Bulk select."},
+"057": {"ar":"ثلاث بطاقات ملوّنة لأنواع قوالب واتساب: تسويق وخدمات ومصادقة.","en":"Three coloured cards for the WhatsApp template categories: Marketing, Utility and Authentication."},
+"058": {"ar":"لقطة من Flovoo وقائمة الدعم مفتوحة، وسهم أحمر يشير إلى «Chat with Support».","en":"A Flovoo screen with the Support menu open and a red arrow pointing at Chat with Support."},
+"059": {"ar":"لقطة من شاشة إنشاء قالب واتساب في Flovoo: النموذج على اليمين ومعاينة القالب على هاتف في المنتصف.","en":"The Flovoo WhatsApp template builder: the form on one side and a phone preview of the template in the middle."}
+}

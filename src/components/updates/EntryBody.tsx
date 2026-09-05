@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * An entry's body, collapsed past a certain height with a fade and a
@@ -14,12 +14,13 @@ const COLLAPSED_HEIGHT = 260;
 
 export function EntryBody({
   id,
-  paragraphs,
+  children,
   moreLabel,
 }: {
   /** Unique per entry: this element is referenced by the collapse control. */
   id: string;
-  paragraphs: string[];
+  /** The rendered body. Built on the server so the block renderer stays there. */
+  children: ReactNode;
   moreLabel: string;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -38,7 +39,7 @@ export function EntryBody({
     const observer = new ResizeObserver(check);
     observer.observe(node);
     return () => observer.disconnect();
-  }, [paragraphs]);
+  }, [children]);
 
   const collapsed = overflows && !expanded;
 
@@ -47,12 +48,10 @@ export function EntryBody({
       <div
         ref={contentRef}
         id={id}
-        className="flex flex-col gap-4 overflow-hidden text-sm/6 text-text-secondary"
+        className="help-prose overflow-hidden text-sm/6 text-text-secondary"
         style={collapsed ? { maxHeight: COLLAPSED_HEIGHT } : undefined}
       >
-        {paragraphs.map((paragraph, index) => (
-          <p key={index}>{paragraph}</p>
-        ))}
+        {children}
       </div>
 
       {collapsed ? (

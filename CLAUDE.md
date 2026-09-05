@@ -30,7 +30,8 @@ npm run dev        # never start this from Bash — use the preview tooling
 npm run build      # Turbopack production build
 npm run lint       # eslint, including react-hooks rules that catch real bugs
 npm run typecheck  # tsc --noEmit
-npm run seed:sql   # regenerate supabase/seed.sql from src/lib/data/seed.ts
+npm run seed:sql   # regenerate supabase/seed.sql + seed-help.sql from the TS seeds
+npm run db:migrate # apply pending supabase/migrations to SUPABASE_DB_URL (see below)
 ```
 
 ## Structure
@@ -110,9 +111,13 @@ Google OAuth and email magic links, both through Supabase.
 admin and it cannot be the admin table. After that, `admin_users` is the roster.
 Both are checked, in that order.
 
-The guard sits in two places on purpose: the admin layout gates the pages, and
-every admin action re-resolves the session itself. A Server Action is a reachable
-endpoint whether or not a page renders a button for it.
+The guard sits in three places on purpose: the admin layout gates the UI, every
+admin **page** calls `requireAdminPage()` before reading data, and every admin
+action re-resolves the session itself. A Server Action is a reachable endpoint
+whether or not a page renders a button for it — and a page segment renders on
+the server even when the layout does not place it, so without the page-level
+guard its data (draft titles, submitter emails) travelled in the response
+payload to anyone who requested the URL. Found and fixed during Phase 3.
 
 `dev-session.ts` accepts any address without verification and **refuses to run in
 production** — it exists so the full flow can be exercised with no Supabase
@@ -160,6 +165,180 @@ dictionaries; never inline a string in a component.
 - Both languages are mandatory on any content record. The editors show them side
   by side and the server refuses a half-translated save.
 
+### Help center — analytics and RAG (Phase 5)
+
+- **Views are beaconed, not rendered**: article pages are static, so
+  `ViewTracker` posts once per browser session to `/api/help/view`. The session
+  id is random, browser-made, hashed again server-side; the referrer is reduced
+  to a hostname. No address, no user agent, no PII.
+- **Aggregates live in SQL** (`0009`, guard fixed in `0010`). They are
+  security-definer and check `help_analytics_allowed()` — an admin in the
+  roster **or** the service role. `is_admin()` alone was wrong: it resolves
+  through `auth.uid()`, which is null for the service key the dashboard reads
+  with *and* for a bootstrap admin who is in `ADMIN_EMAILS` but not yet in
+  `admin_users`. Verified: service key sees the data, anon key sees nothing.
+- **Chunking** is `chunks-core.ts` (pure, unit tested) wrapped by `chunks.ts`
+  (database + embeddings). `syncArticleChunks()` runs after every save and
+  status change and can never fail the save.
+- **The agent contract is versioned** (`/api/agent/v1/*`) and documented in the
+  README. Additive changes only; a breaking change is `/v2`.
+- **A value exported from a `"use client"` module reaches a server component as
+  a reference proxy, not the object.** Reading a field off it throws at render
+  time. `suggestSlug` and `EMPTY_TRANSLATION` both hit this; they now live in
+  `lib/help/slug.ts` and `lib/help/editor-draft.ts`. Keep shared values out of
+  client components.
+
+## Intercom migration — the token is temporary
+
+Content comes in through Intercom's **API**, not a file export: `INTERCOM_ACCESS_TOKEN`
+in `.env.local`, from a read-only internal app in Intercom's Developer Hub. The
+region host (`api.intercom.io` / `api.eu.intercom.io` / `api.au.intercom.io`) is
+detected, not configured.
+
+**When the migration finishes, tell the user to delete that internal app and
+clear the variable.** They asked to be reminded; do not wait to be asked. The
+token reads the whole workspace and stays valid until the app is deleted.
+
+### What ran, in order
+
+1. `npm run intercom:export` — the raw safety net: 15 collections, 55 articles,
+   116 news items, written to `migration/intercom-export/` untouched.
+2. `npm run intercom:images` — 203 images pulled down **before their signed
+   URLs expired**. That deadline is why the export runs before any decision.
+3. `npm run intercom:survey` — what Intercom holds versus what this schema
+   supports, so the gaps reach the user instead of being decided for them.
+4. `npm run intercom:private-backup` — 224 conversations with their message
+   threads, 419 contacts, 230 companies, into `migration/private-backup/`.
+   **Disk only.** That folder is git-ignored and this data never enters the
+   database; it is personal information kept only because closing the account
+   destroys it.
+5. `npm run intercom:import` — plans and writes `migration/import-review.md`;
+   `-- --apply` uploads the images and imports.
+
+### Rules the importer holds to
+
+- **Everything imports as a draft**, including articles Intercom had published,
+  and every collection lands unpublished. "Import as drafts" is meaningless if
+  visitors can see empty topics.
+- **The delete and the import are one transaction.** The samples are removed and
+  the Intercom content inserted together, so a failure leaves the samples
+  standing. This was not theoretical: the first `--apply` threw partway and the
+  rollback held.
+- **Images are uploaded before the transaction**, at a path derived from a hash
+  of their source URL, so re-running neither duplicates nor re-sends them.
+  Object storage cannot join a database transaction; making the upload
+  idempotent is what replaces that.
+- **`scripts/intercom-html.ts` refuses to guess.** Any tag, attribute or shape
+  it does not recognise is collected and the import stops before writing. An
+  unknown tag silently dropped is content nobody can recover once Intercom is
+  closed.
+- **Old addresses are matched three ways** — exact, percent-decoded, and by the
+  Intercom id alone (`/ar/articles/16536857`). The id survives a retitling; the
+  slug in a saved link does not. `redirect-candidates.ts` is pure and unit
+  tested for exactly this.
+
+Result: 54 articles (the Spanish demo dropped by decision), 99 translations,
+16 collections, 202 images, 231 redirects. All 90 real Intercom addresses
+resolve. `migration/import-review.md` is the inventory the user reviews.
+
+### News → the changelog (migrations 0011, 0012)
+
+Intercom's News became `changelog_entries`. Two things had to change first.
+
+- **Bodies are rich now** (`0012`). They were plain text rendered as paragraphs;
+  98% of the 116 announcements use a list, bold, a link or a heading, so
+  flattening them would have lost the readable part. They hold the same
+  ProseMirror JSON as help articles, and the editor (`BlockEditor`) and renderer
+  (`ArticleBody`) are the help center's — one vocabulary, no mapping layer.
+  `src/lib/changelog/body.ts` is the pure helper; the two entries written before
+  the migration were converted in place. `EntryBody` now takes a rendered node,
+  built on the server, instead of a string array.
+- **Alt text can be a draft** (`0011`). See below.
+
+**Intercom stores no field linking an announcement's Arabic half to its English
+one.** The pairing is inferred, and the inference is validated: 31 pairs are
+proved by a shared cover image, and the position-and-time rule was tested
+against those — it gets 30 of 31 right *only* with the direction constraint
+(the Arabic item is written after its English twin and carries the higher id).
+Without it the ids interleave and a nearest-match rule pairs each item with the
+wrong side: 8 of 31. If you ever re-run this, keep that constraint.
+
+Result: 54 bilingual entries, 8 untitled drafts skipped, 74 covers, 13 links
+rewritten onto the new help articles. Additive — nothing already in the
+changelog was touched, and everything landed unpublished.
+
+**Open: one cover per language.** 21 of the 54 announcements had a different
+cover in each language (an Arabic screenshot and an English one).
+`changelog_entries.image_url` is a single shared column, so the Arabic cover is
+stored for both. All 74 covers are uploaded, so the fix is one migration adding
+a per-language column, not another download. Written up in
+`migration/news-review.md`.
+
+### Alt text is required to publish, not to save
+
+`validateTranslation()` takes `requireAlt`, set from `status === "published"`.
+A draft may hold an image with no alt text — an editor pasting a screenshot
+mid-sentence should not be blocked, and the 202 images imported from Intercom
+arrived with none. The requirement still holds the moment a reader could see
+the image.
+
+**Every path that publishes must run the check, not just the editor.** The
+guard lived only in `saveHelpArticleAction`, so the articles list's bulk
+"publish" (`setHelpArticlesStatusAction`) walked straight past it — 20 articles
+went live carrying machine-written descriptions before anyone noticed. Both
+actions call `figureWithoutAlt()` now. When you add another way to change
+status, it needs the same check.
+
+**Generated descriptions are marked, and the mark is what publishing checks.**
+All 202 article images and 74 news covers were described by reading them, and
+saved as drafts: `altDraft: true` on the figure node, `alt_needs_review` on
+`help_media` (migration 0011). `figureWithoutAlt()` treats a draft alt as no alt,
+so an article cannot be published until somebody has been through them; editing
+the field in the editor clears the flag, and the editor shows an "unreviewed"
+badge until it does. The pipeline is `help:alt-worklist` → describe →
+`help:alt-apply`, and `news:alt-apply` for the covers.
+
+## Before the first production deploy — do not skip
+
+**The help center must ship `noindex` and be blocked in `robots.txt` on its
+first deploy.** It rides on the roadmap's domain until `help.flovoo.com` is
+pointed at it, and the content is still incomplete; letting Google index
+`news.flovoo.com/ar/help/...` would put the wrong host in the index and cost
+more to undo than to prevent. Set `NEXT_PUBLIC_HELP_INDEXABLE=false` (the
+default is unset, which means *not* indexable) and confirm:
+
+- every help page emits `<meta name="robots" content="noindex, nofollow">`,
+- `robots.txt` disallows `/ar/help` and `/en/help`,
+- the sitemaps omit help URLs.
+
+Open indexing (`NEXT_PUBLIC_HELP_INDEXABLE=true`) only once `help.flovoo.com`
+resolves to this app **and** the content is ready to be found. Decided at the
+Phase 4 review, 2026-09-05.
+
+## Permanent checks
+
+Run these before calling any phase done, and again before a deploy.
+
+- **Admin pages leak nothing without a session.** For every admin route,
+  request the URL with no cookies and confirm the response contains no admin
+  data — not merely that the interface is hidden. `npm run check:admin-guard`
+  does this against the running dev server (or `BASE_URL=… ` for production)
+  and fails on any private field name in the payload. When you add an admin
+  page: call `requireAdminPage()` first, then add its path to
+  `scripts/check-admin-guard.ts`. This exists because the layout-only guard
+  shipped a real leak (draft titles, submitter emails) until Phase 3 of the
+  help center found it.
+- **Customer data never reaches git or the database.** `migration/private-backup/`
+  holds conversations, contacts and companies pulled out of Intercom. It is
+  excluded in `.gitignore`; confirm with `git check-ignore -v` and
+  `git add -A --dry-run | grep private-backup` before any commit. Nothing in
+  `src/` reads it and no migration loads it.
+- **Every publish path enforces alt text.** There is more than one way to
+  publish an article (the editor, and the list's bulk action). Each has to run
+  `figureWithoutAlt()`; a new one that skips it silently reopens the hole.
+- `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`; the build
+  must still list the help pages as prerendered (`●`).
+
 ## Gotchas this codebase has already paid for
 
 - **`animate-fade-up` with `fill-mode: both`** pinned opacity at 0 in hidden
@@ -169,6 +348,15 @@ dictionaries; never inline a string in a component.
 - **`next/og` reverses Arabic word order.** Share cards are rendered from
   `tools/og-card.html` in a real browser and committed as PNGs. Do not move them
   back to a route.
+- **Supabase matches redirect URLs as whole strings** (only the Site URL's own
+  host is exempt). A `?next=` on the callback URL made every local Google
+  sign-in land on production. The return path now rides in the
+  `flovoo_auth_next` cookie (`lib/auth/return-path.ts`) and the callback URL is
+  bare; add `http://localhost:3000/**` to the allow list for good measure.
+- **A phone on the LAN gets HTML but no JavaScript from `next dev`** unless its
+  origin is in `allowedDevOrigins`. Buttons highlight on tap and do nothing;
+  the console shows only a failed HMR socket. Restart the dev server after
+  changing the config.
 - **A stale `.next` after deleting files** leaves the dev server broken while the
   production build is clean. `rm -rf .next` and restart.
 - **Measure the live DOM, not screenshots**, when matching the reference — and
@@ -179,6 +367,150 @@ dictionaries; never inline a string in a component.
   samples colours mid-transition and produces false positives.
 - `eslint`'s react-hooks rules have caught real bugs here repeatedly — `Date.now()`
   during render, setState in effects. Do not silence them.
+
+## Help center (`/[locale]/help`, served as `help.flovoo.com`)
+
+The same app, a second product. The brief is `flovoo-help-center-build-prompt.md`;
+it is built one phase at a time and stops for review after each. **Phase 1 is
+done**: schema, seed, the public home / category / article pages.
+
+- **Routes** live under `src/app/[locale]/help/*`. In production the help host
+  is mapped onto them by `proxy.ts`; `src/lib/help/paths.ts` builds every public
+  link from `NEXT_PUBLIC_HELP_URL`, so static HTML never guesses the host. Always
+  link through those helpers, never with a literal `/help/` path.
+- **Tables** are prefixed `help_` (`0005_help_center.sql`): `help_collections`,
+  `help_articles`, `help_article_translations`, `help_media`, and the event
+  tables `help_article_feedback` / `help_article_views` / `help_search_queries` /
+  `help_redirects`. Chunks, pgvector and pg_trgm arrive with search and RAG.
+- **Bodies are Tiptap-compatible ProseMirror JSON** (`src/lib/help/blocks.ts`),
+  rendered by `ArticleBody.tsx`. `body_plain`, `toc` and `reading_minutes` are
+  derived by `deriveArticleMeta()` on every save — the seed generator does it
+  now, the admin editor will in Phase 3. Never hand-edit them.
+- **Slugs are verbatim Arabic**, unique per language, percent-encoded only in
+  the URL. Collections keep one Latin slug shared by both languages.
+- **The pages are static with ISR** and read no session. Anything that needs the
+  query string (the missing-translation notice) is a client component in a
+  Suspense boundary, as `AuthNotice` is. `help/not-found.tsx` gets its locale
+  from `next/root-params`, because a not-found boundary has no params — reading
+  `headers()` there silently turned the whole help segment dynamic once.
+- **Every help page has the persistent topic sidebar** (`HelpShell` +
+  `HelpSidebarNav`), anchored to the inline-start edge of the viewport — right
+  in Arabic, left in English — with the content area taking the rest and each
+  page centring its own reading column. The brief's "no sidebar on the
+  homepage" was withdrawn at the Phase 1 review. Below `lg` it lives behind the
+  header's menu button (`HelpMobileNav`, a native dialog) and is never visible
+  by default. Data comes from `getHelpNavigation()`.
+- **Help text tokens are scoped**: `help/layout.tsx` wraps the pages in
+  `.help-surface`, which redefines `--color-text` and friends to the Flovoo
+  system's primary text (#1F2430) for long-form reading. The roadmap keeps its
+  own measured values. Do not edit the root tokens to fix help contrast.
+- **Articles can carry a section** (`section_ar` / `section_en`, both or
+  neither) that groups them into one card each on the category page
+  (`groupArticlesBySection`, `ArticleSectionCard`). Articles without one share a
+  card titled "Articles".
+- The article's outline rail sits at the **inline end** (left in Arabic, right in
+  English), opposite the sidebar, and only from `xl` up because three columns
+  share the `max-w-board` track; below that it folds into the accordion.
+- **Density.** Prose is the system body pair (14/1.65 Latin, 15/1.75 Arabic),
+  titles are 24px, section titles 16px. The reviewer found the brief's 16–17px
+  long-form setting heavy on a phone; do not drift back up.
+- **Counts are pluralized** through `src/lib/help/format.ts` — Arabic has four
+  forms. Never format a count with a bare `{count}` template.
+- **Local dev without Supabase** serves `help-seed.ts`. One seed article is
+  Arabic-only on purpose (the missing-translation path) and one is a draft
+  (must never render publicly).
+
+### Help center — search and feedback (Phase 2)
+
+- **Arabic normalization lives in two places that must agree**:
+  `src/lib/help/arabic.ts` (TypeScript, pinned by `npm test`) and
+  `help_normalize()` in `0006_help_search.sql`. Hamza → ا, ى → ي, ة → ه,
+  diacritics and tatweel dropped, Arabic-Indic digits → 0-9, a fused definite
+  article (ال، وال، بال، فال، كال، لل) stripped when three letters remain.
+- **Search is hybrid**: trigram similarity on the normalized title (boosted) and
+  text, plus cosine similarity over `help_article_chunks` when an embedding is
+  available. `searchHelp()` in `src/lib/help/search.ts` calls the `help_search()`
+  RPC with Supabase and runs the same formula over the seed without it.
+  Snippets and `<mark>` highlighting are always built in TypeScript.
+- **Embeddings are optional and env-driven** (`HELP_EMBEDDING_*`, OpenAI API
+  shape, 1536-wide). Unset → lexical only, no error. Chunks are written by the
+  Phase 5 pipeline; until then the semantic leg finds nothing.
+- **Logging**: the results page logs every query server-side; the search box
+  logs the query the reader settled on (800 ms after results arrive), never
+  keystrokes. Clicks are attributed by beacon. Writes prefer the service key so
+  the row id comes back; the anon key can insert but not read these tables.
+- **Feedback** is a public Server Action (`help/actions.ts`) with a hashed
+  IP+UA visitor id, rate limited, remembered per article in localStorage via
+  `useSyncExternalStore` — not an effect, which the hooks lint forbids here.
+- **Related articles** = same topic first, then lexical closeness
+  (`help_related()` / the local mirror). Embedding similarity joins later
+  without changing the result shape.
+- `/api/help/*` routes sit outside the locale prefix; the proxy matcher already
+  skips `api`.
+
+### Help center — admin (Phase 3)
+
+- Lives under `src/app/[locale]/admin/help/*` behind the existing admin layout
+  guard; every action in `admin/help/actions.ts` calls `requireAdmin()` itself.
+  Sub-navigation: articles · topics · media (`HelpAdminNav`).
+- **Data**: `help-admin-repository.ts` / `help-admin-mutations.ts` (service
+  role). Without Supabase they read and write the same `localHelpContent()`
+  snapshot the public repository reads — never merge seed and edits elsewhere.
+- **The editor is Tiptap v3** (`components/admin/help/editor/`). Custom nodes in
+  `extensions.ts` carry exactly the names `ArticleBody.tsx` renders. Before a
+  save the editor JSON goes through `JSON.parse(JSON.stringify(…))`:
+  ProseMirror builds attrs with `Object.create(null)` and React will not pass
+  prototype-less objects into a Server Action ("temporary client reference").
+- **Arabic is required, English optional** on save; publishing with Arabic only
+  is allowed and shows the missing-translation notice publicly.
+- **Media** uploads go through `POST /api/admin/help/media` (Route Handler, so
+  no action body limit), into the public `help-media` bucket (migration 0007)
+  or `public/help-uploads/` locally. The library refuses to delete a file an
+  article body references.
+- **Revalidation**: `revalidatePath("/[locale]/help", "layout")` after every
+  write — a topic rename touches the sidebar on every page anyway.
+- Testing the admin locally with Supabase configured needs a real sign-in; the
+  dev stub only runs without Supabase. Park `.env.local` (rename it) and
+  restart to exercise the admin against the local store, then restore it.
+
+### Help center — SEO and redirects (Phase 4)
+
+- **JSON-LD** (`lib/help/seo.ts`, `<JsonLd>`): TechArticle + BreadcrumbList on
+  articles, FAQPage when a body has FAQ blocks, BreadcrumbList on topics,
+  WebSite with SearchAction on the home. Open Graph and Twitter fields come
+  from `helpSocialMetadata()`.
+- **Share cards are rasterised SVG**, not `ImageResponse`: `/api/og/help`
+  renders with `@resvg/resvg-js` and the fonts in `src/lib/og/fonts/` because
+  Satori reverses Arabic word order. An uploaded `og_image_path` wins.
+- **Sitemaps**: `app/sitemap.ts` with `generateSitemaps` → `/sitemap/ar.xml`,
+  `/sitemap/en.xml`, hreflang alternates per entry, listed in `app/robots.ts`;
+  revalidated with the help pages on publish.
+- **Redirects run in pages, not in `proxy.ts`**: the article and topic pages
+  consult `help_redirects` (via `help_redirect_hit()`, which counts the hit)
+  only after a slug fails to match; `help/[...legacy]` catches every other
+  shape, then records the miss in `help_not_found` and sends the reader to
+  search with the old slug as the query. Source/target are stored as *public*
+  paths (`/ar/articles/…`) and mapped to internal hrefs by `resolveHelpTarget`.
+- **Alt text is enforced on save** — a figure without alt fails validation.
+- Lighthouse was not run in this environment; the on-page checklist (canonical,
+  hreflang, meta, alt, JSON-LD, sitemap, robots) is verified by curl.
+
+## Applying migrations
+
+`scripts/apply-migrations.ts` (`npm run db:migrate`, add `--seed-help` for the
+help seed) connects with `SUPABASE_DB_URL` from `.env.local`, records what it
+ran in `public.app_migrations`, and recognises migrations applied before the
+table existed by a marker object each one creates. **The production project is
+the live roadmap** — it holds real features, votes and submissions — so
+`seed.sql` (roadmap dev data, deletes first) is never applied there; only
+`seed-help.sql` is. **Migrations already applied there are frozen**: 0001–0006
+as of 2026-09-05. Add a new numbered file for any schema change.
+
+The direct database host is IPv6-only and macOS `getaddrinfo` does not return
+it to Node, so `SUPABASE_DB_URL` uses the **Session pooler** host
+(`aws-1-eu-west-1.pooler.supabase.com`, user `postgres.<ref>`, port 5432).
+PostgREST refreshes its schema cache a few seconds after DDL; a page loaded in
+that window says "Could not find the table … in the schema cache" once.
 
 ## Deliberately not built
 

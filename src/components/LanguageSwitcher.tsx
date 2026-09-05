@@ -17,15 +17,20 @@ import {
  * Swaps only the locale segment and carries the query string over untouched.
  * Because the board keeps its search, category, sort and open item in the URL,
  * switching language lands the visitor exactly where they were.
+ *
+ * Pages whose counterpart lives at a different path — a help article, whose
+ * slug is localized — pass the destination in as `href` instead.
  */
 export function LanguageSwitcher({
   locale,
   label,
   switchLabel,
+  href: explicitHref,
 }: {
   locale: Locale;
   label: string;
   switchLabel: string;
+  href?: string;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -33,7 +38,8 @@ export function LanguageSwitcher({
 
   const rest = pathname.split("/").slice(2).join("/");
   const query = searchParams.toString();
-  const href = `/${target}${rest ? `/${rest}` : ""}${query ? `?${query}` : ""}`;
+  const href =
+    explicitHref ?? `/${target}${rest ? `/${rest}` : ""}${query ? `?${query}` : ""}`;
 
   function persist() {
     document.cookie = `${LOCALE_COOKIE}=${target}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE}; samesite=lax`;

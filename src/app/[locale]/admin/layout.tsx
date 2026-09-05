@@ -80,6 +80,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<"/[l
               board: dict.admin.board,
               submissions: dict.admin.submissions,
               changelog: dict.admin.changelog,
+              helpCenter: dict.admin.helpCenter,
             }}
           />
         </div>

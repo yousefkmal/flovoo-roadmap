@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" role="img">
+  <defs>
+    <linearGradient id="ar-accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2EA8FF"/><stop offset="50%" stop-color="#4D6BFB"/><stop offset="100%" stop-color="#7A5AF8"/>
+    </linearGradient>
+    <filter id="ar-shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#17244F" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="720" fill="#F7F8FB"/>
+  <rect x="80" y="60" width="1040" height="600" rx="20" fill="#FFFFFF" stroke="#E6E9F2" filter="url(#ar-shadow)"/>
+  <line x1="80" y1="124" x2="1120" y2="124" stroke="#E6E9F2"/>
+  <rect x="116" y="84" width="200" height="18" rx="6" fill="#17244F"/>
+  <rect x="960" y="80" width="124" height="28" rx="14" fill="#E7F8F0"/>
+  <rect x="984" y="90" width="76" height="8" rx="4" fill="#12B76A"/>
+  <!-- trigger card -->
+  <rect x="116" y="160" width="420" height="200" rx="16" fill="#F7F8FB" stroke="#E6E9F2"/>
+  <rect x="140" y="184" width="64" height="10" rx="5" fill="#667085"/>
+  <rect x="140" y="208" width="372" height="52" rx="10" fill="#FFFFFF" stroke="#4D6BFB" stroke-width="2"/>
+  <circle cx="168" cy="234" r="12" fill="#EDF0FF"/><circle cx="168" cy="234" r="5" fill="#4D6BFB"/>
+  <rect x="192" y="228" width="220" height="12" rx="6" fill="#1F2430"/>
+  <rect x="140" y="276" width="372" height="52" rx="10" fill="#FFFFFF" stroke="#E6E9F2"/>
+  <circle cx="168" cy="302" r="12" fill="#F7F8FB" stroke="#E6E9F2"/>
+  <rect x="192" y="296" width="160" height="12" rx="6" fill="#98A2B8"/>
+  <!-- connector -->
+  <line x1="326" y1="360" x2="326" y2="400" stroke="#4D6BFB" stroke-width="3" stroke-dasharray="6 6"/>
+  <!-- channels card -->
+  <rect x="116" y="400" width="420" height="200" rx="16" fill="#F7F8FB" stroke="#E6E9F2"/>
+  <rect x="140" y="424" width="80" height="10" rx="5" fill="#667085"/>
+  <rect x="140" y="452" width="130" height="36" rx="18" fill="#FFFFFF" stroke="#4D6BFB" stroke-width="2"/>
+  <circle cx="162" cy="470" r="8" fill="#25D366"/><rect x="178" y="465" width="70" height="10" rx="5" fill="#1F2430"/>
+  <rect x="284" y="452" width="130" height="36" rx="18" fill="#FFFFFF" stroke="#E6E9F2"/>
+  <circle cx="306" cy="470" r="8" fill="#E1306C"/><rect x="322" y="465" width="70" height="10" rx="5" fill="#98A2B8"/>
+  <!-- message card -->
+  <rect x="572" y="160" width="512" height="440" rx="16" fill="#FFFFFF" stroke="#E6E9F2"/>
+  <rect x="596" y="184" width="90" height="10" rx="5" fill="#667085"/>
+  <rect x="596" y="208" width="464" height="260" rx="10" fill="#F7F8FB" stroke="#E6E9F2"/>
+  <rect x="616" y="232" width="380" height="12" rx="6" fill="#1F2430"/>
+  <rect x="616" y="258" width="424" height="12" rx="6" fill="#1F2430" opacity="0.8"/>
+  <rect x="616" y="284" width="300" height="12" rx="6" fill="#1F2430" opacity="0.8"/>
+  <rect x="616" y="326" width="200" height="12" rx="6" fill="#1F2430" opacity="0.6"/>
+  <rect x="596" y="490" width="160" height="10" rx="5" fill="#98A2B8"/>
+  <rect x="884" y="540" width="176" height="44" rx="10" fill="url(#ar-accent)"/>
+  <rect x="940" y="557" width="64" height="10" rx="5" fill="#FFFFFF"/>
+</svg>

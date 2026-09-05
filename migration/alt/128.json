@@ -1,0 +1,10 @@
+{
+"128": "Contacts page with a red arrow pointing to the overflow menu button (three dots) beside Add Contact, outlined in red.",
+"129": "The overflow menu open on the Contacts page, with a red arrow pointing to the Import option, outlined in red.",
+"130": "The \"Import Contacts\" dialog over the Contacts page, with a drop area for an Excel file, a Browse file link, and Cancel and Import buttons, outlined in red.",
+"131": "WhatsApp Payments settings page listing three connected accounts with their balances and Active or Inactive status, each with Add Balance and Manage Payment Method buttons, and a billing history table below.",
+"132": "WhatsApp accounts page in Meta business portfolio settings, showing an account summary with business information, currency, time zone, account status and \"No payment method found\", plus Payment settings and WhatsApp Manager buttons.",
+"133": "Meta Billing & payments page for an account, showing a current balance of $0.00, no payment methods added, no recent spending, and the business info panel.",
+"134": "The same Meta Billing & payments page with the Add payment method button, payment activity and business info panels, and a Help Centre list of billing links.",
+"135": "The \"Add payment information\" dialog over the billing page, asking for country or region, currency and time zone, with a note that location and currency cannot be changed once set, and a Next button."
+}

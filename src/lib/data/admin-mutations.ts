@@ -1,3 +1,4 @@
+import { plainToDoc, type ChangelogBody } from "@/lib/changelog/body";
 import "server-only";
 
 import { randomUUID } from "node:crypto";
@@ -80,9 +81,11 @@ export async function draftChangelogForFeature(featureId: string): Promise<void>
       kind: "new",
       title_ar: feature.title_ar,
       title_en: feature.title_en,
-      body_ar: feature.description_ar,
-      body_en: feature.description_en,
+      body_ar: plainToDoc(feature.description_ar),
+      body_en: plainToDoc(feature.description_en),
       image_url: null,
+      image_url_en: null,
+      cover_alt_needs_review: false,
       image_alt_ar: null,
       image_alt_en: null,
       article_url: null,
@@ -114,8 +117,8 @@ export async function draftChangelogForFeature(featureId: string): Promise<void>
     kind: "new",
     title_ar: feature.title_ar,
     title_en: feature.title_en,
-    body_ar: feature.description_ar,
-    body_en: feature.description_en,
+    body_ar: plainToDoc(feature.description_ar),
+    body_en: plainToDoc(feature.description_en),
     is_published: false,
   });
 }
@@ -128,9 +131,11 @@ export interface ChangelogInput {
   kind: ChangelogKind;
   title_ar: string;
   title_en: string;
-  body_ar: string | null;
-  body_en: string | null;
+  body_ar: ChangelogBody | null;
+  body_en: ChangelogBody | null;
   image_url: string | null;
+  image_url_en: string | null;
+  cover_alt_needs_review: boolean;
   image_alt_ar: string | null;
   image_alt_en: string | null;
   article_url: string | null;

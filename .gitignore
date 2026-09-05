@@ -43,3 +43,15 @@ yarn-error.log*
 next-env.d.ts
 
 tsconfig.tsbuildinfo
+
+# local media uploads (development without Supabase Storage)
+/public/help-uploads
+
+# Raw Intercom export — the migration safety net. Their content, kept on
+# disk, not in the repo.
+/migration/intercom-export
+
+# Customer data pulled out of Intercom before it is closed: conversations,
+# contacts, companies. Personal information — it stays on this machine, never
+# in the repo and never in the database.
+/migration/private-backup

@@ -1,0 +1,10 @@
+{
+"184": "The \"Connect to the Business Platform\" screen on the phone, offering \"Share all chats\" for up to six months of history or \"Don't share chats\", with a Confirm button.",
+"185": "The \"Confirm or edit your WhatsApp Business account\" step showing the account name and the time zone set to (GMT+02:00) Africa/Cairo, with a Next button.",
+"186": "The \"Review what you'll share with Flovoo Platform\" step listing the requested permissions: manage WhatsApp accounts, manage and access conversations, and log events on the account's behalf, with a Confirm button.",
+"187": "A confirmation screen saying \"Your account is connected to Flovoo Platform\", with Add payment method and Finish buttons.",
+"188": "Flovoo Channels page listing one connected WhatsApp channel, with a red arrow pointing to Channels in the sidebar, outlined in red.",
+"189": "Flovoo Channels page with a red arrow pointing to the actions button (three dots) on the channel row, outlined in red.",
+"190": "The channel actions menu open, showing the connection status and the management options Edit, Sync Chat History and Delete, with a red arrow pointing to Sync Chat History, outlined in red.",
+"191": "Flovoo Channels page with a \"Sync Completed\" panel in the corner reporting the messages and contacts synced, with View Chats and Dismiss buttons, outlined in red."
+}

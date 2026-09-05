@@ -11,10 +11,12 @@ import {
   getAdminStats,
   getAllFeatures,
 } from "@/lib/data/admin-repository";
+import { requireAdminPage } from "@/lib/auth/admin";
 
 export default async function AdminBoardPage({ params }: PageProps<"/[locale]/admin">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  await requireAdminPage();
 
   const dict = getDictionary(locale);
   const features = await getAllFeatures();

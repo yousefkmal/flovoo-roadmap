@@ -1,0 +1,6 @@
+{
+"000": {"ar":"لقطة من صفحة جهات الاتصال في Flovoo وعليها نافذة «استيراد جهات الاتصال» لرفع ملف Excel.","en":"The Flovoo contacts page with the Import Contacts dialog open for uploading an Excel file."},
+"001": {"ar":"لقطتان من إعدادات Flovoo: صفحة الإعدادات وسهم إلى «الأعضاء»، وبطاقة عضو فيها الأدوار والصلاحيات: مدير ومشرف ووكيل.","en":"Two Flovoo settings screens: the settings home with an arrow to Members, and a member card showing the Admin, Manager and Agent roles."},
+"002": {"ar":"لقطة من صفحة مراحل جهات الاتصال في Flovoo تعرض المراحل الجارية والمرحلة المفقودة.","en":"The Flovoo Contact Stages settings page showing the in-progress stages beside the Lost stage."},
+"003": {"ar":"لقطتان من صفحة الأعضاء في Flovoo: جدول الأعضاء مع قائمة الإجراءات، وبطاقة عضو فيها اختيار الدور والصلاحيات.","en":"Two Flovoo member screens: the members table with its actions menu, and a member card with the role and permissions picker."}
+}

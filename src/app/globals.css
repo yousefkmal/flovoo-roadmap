@@ -76,6 +76,12 @@
   --color-info: #4d6bfb;
   --color-info-tint: #edf0ff;
   --color-info-label: color-mix(in oklab, var(--color-info) 58%, var(--color-flovoo-heading));
+  /* The system's semantic tints, with labels darkened to clear AA as text on
+     them — the raw success and warning hues are icon colours, not type. */
+  --color-success-tint: #e7f8f0;
+  --color-success-label: #0f7a4a;
+  --color-warning-tint: #fef2e2;
+  --color-warning-label: #9a5b00;
 
   /* Flovoo Blue is 4.35:1 on white — just under AA at label sizes — so links
      and the active tab use the system's hover blue on light. */
@@ -174,6 +180,10 @@
 
   --color-info-tint: color-mix(in oklab, #4d6bfb 18%, #1d2337);
   --color-info-label: color-mix(in oklab, #4d6bfb 55%, white);
+  --color-success-tint: color-mix(in oklab, #12b76a 14%, #1d2337);
+  --color-success-label: #4ade80;
+  --color-warning-tint: color-mix(in oklab, #f79009 14%, #1d2337);
+  --color-warning-label: #fbbf24;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.24);
   --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.45);
@@ -331,4 +341,249 @@ html[lang="ar"] .label-caps {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Help center — text tokens
+   The roadmap's text colours were measured from its own reference and sit a
+   step lighter than the Flovoo system's. Long-form reading wants the system's
+   primary text, so the help pages override the roles inside their own
+   surface. Light: text #1F2430 (16:1 on white), secondary 6.9:1, tertiary
+   4.9:1 — all comfortably past AA for normal text. Dark lifts the same way.
+   -------------------------------------------------------------------------- */
+
+.help-surface {
+  --color-text: #1f2430;
+  --color-text-secondary: #4a5470;
+  --color-text-tertiary: #5b678f;
+  --color-placeholder: #5b678f;
+}
+
+:root[data-theme="dark"] .help-surface {
+  --color-text: #f2f4fa;
+  --color-text-secondary: #c6cbdc;
+  --color-text-tertiary: #aab2c8;
+  --color-placeholder: #a3abc2;
+}
+
+/* --------------------------------------------------------------------------
+   Help center — article body
+   Set at the system's own body pair — 14/1.6 Latin, 15/1.75 Arabic — one step
+   below the brief's long-form allowance after review found the larger setting
+   heavy on a phone. The reading column is ~640px so the measure stays right
+   at this size. Every spacing rule is logical so one sheet serves both
+   directions.
+   -------------------------------------------------------------------------- */
+
+.help-prose {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+html[lang="ar"] .help-prose {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.help-prose > * + * {
+  margin-block-start: 1em;
+}
+
+.help-prose > h2,
+.help-prose > h3 {
+  color: var(--color-text);
+  font-weight: 700;
+  line-height: 1.35;
+  /* Room under the sticky header when an anchor is followed. */
+  scroll-margin-block-start: 5rem;
+}
+
+.help-prose > h2 {
+  font-size: 20px;
+  margin-block-start: 2em;
+  padding-block-start: 0.7em;
+  border-block-start: 1px solid var(--color-border);
+}
+
+.help-prose > h3 {
+  font-size: 16px;
+  margin-block-start: 1.6em;
+}
+
+.help-prose > h2 + *,
+.help-prose > h3 + * {
+  margin-block-start: 0.6em;
+}
+
+.help-prose a {
+  color: var(--color-link);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--dur-micro);
+}
+
+.help-prose a:hover {
+  color: var(--color-flovoo-blue-hover);
+}
+
+.help-prose strong {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.help-prose ul,
+.help-prose ol {
+  padding-inline-start: 1.4em;
+}
+
+.help-prose ul {
+  list-style: disc;
+}
+
+.help-prose ol {
+  list-style: decimal;
+}
+
+.help-prose li + li {
+  margin-block-start: 0.35em;
+}
+
+.help-prose li::marker {
+  color: var(--color-muted);
+}
+
+/* Inline code, IDs and numbers: mono, and always their own direction. */
+.help-prose code,
+.help-prose .ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+.help-prose code {
+  padding: 0.05em 0.35em;
+  border-radius: var(--radius-input);
+  background: var(--color-subtle);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.help-prose pre {
+  direction: ltr;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-control);
+  background: var(--color-flovoo-navy);
+  color: #eceff7;
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+
+.help-prose pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.help-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.help-prose th,
+.help-prose td {
+  padding: 0.5rem 0.75rem;
+  text-align: start;
+  vertical-align: top;
+  border-block-end: 1px solid var(--color-border);
+}
+
+.help-prose th {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-subtle);
+  font-size: 0.9em;
+}
+
+.help-prose tr:last-child td {
+  border-block-end: 0;
+}
+
+.help-prose blockquote {
+  padding-inline-start: 1rem;
+  border-inline-start: 3px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.help-prose hr {
+  border: 0;
+  border-block-start: 1px solid var(--color-border);
+}
+
+/* --------------------------------------------------------------------------
+   Help center — the admin block editor
+   The editing surface wears `.help-prose`, so text looks like the article
+   while it is written. Only what Tiptap itself needs is added here.
+   -------------------------------------------------------------------------- */
+
+.help-editor .tiptap:focus {
+  outline: none;
+}
+
+.help-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-placeholder);
+  float: inline-start;
+  height: 0;
+  pointer-events: none;
+}
+
+.help-editor .tiptap ol[data-type="steps"] {
+  list-style: decimal;
+  padding-inline-start: 1.75em;
+}
+
+.help-editor .tiptap ol[data-type="steps"] > li::marker {
+  color: var(--color-link);
+  font-weight: 700;
+}
+
+.help-editor .tiptap table {
+  table-layout: fixed;
+}
+
+.help-editor .tiptap td,
+.help-editor .tiptap th {
+  position: relative;
+  border: 1px solid var(--color-border);
+  min-width: 4rem;
+}
+
+.help-editor .tiptap .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: color-mix(in oklab, var(--color-flovoo-blue) 14%, transparent);
+}
+
+.help-editor .tiptap .ProseMirror-selectednode {
+  outline: 2px solid var(--color-flovoo-blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+.help-editor .tiptap .ProseMirror-gapcursor::after {
+  border-top: 1px solid var(--color-text);
 }

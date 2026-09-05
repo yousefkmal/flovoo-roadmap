@@ -1,0 +1,10 @@
+{
+"020": {"ar":"لقطة من قائمة المحادثات في Flovoo وقائمة الخيارات مفتوحة على محادثة، تعرض «إضافة وسم» و«تحديد متعدد».","en":"The Flovoo chat list with a conversation's options menu open, showing Add tag and Multi-select."},
+"021": {"ar":"لقطتان من Flovoo: نافذة «بدء محادثة جديدة» لاختيار جهة الاتصال والقناة، وقائمة المحادثات بجانبها.","en":"Two Flovoo screens: the Start a new conversation dialog for picking a contact and a channel, and the chat list beside it."},
+"022": {"ar":"لقطة من صفحة الوسوم في Flovoo، وسهم أحمر يشير إلى مقبض إعادة ترتيب الوسم.","en":"The Flovoo Tags page with a red arrow pointing at a tag's reorder handle."},
+"023": {"ar":"لقطتان من صفحة المحادثات في Flovoo: لوحة المرشحات السريعة مفتوحة، وقائمة المحادثات بعد الفلترة.","en":"Two Flovoo Chats screens: the quick filters panel open, and the chat list after filtering."},
+"024": {"ar":"لقطة من تقرير حملة في Flovoo: بياناتها ومسار التسليم بنسب الإرسال والتسليم والقراءة والرد، وجدول المستلمين وحالاتهم.","en":"A Flovoo campaign report: the campaign details, a delivery funnel with sent, delivered, read and replied rates, and a recipients table with their statuses."},
+"025": {"ar":"لقطة من صفحة جهات الاتصال في Flovoo وقائمة الخيارات مفتوحة، وسهم أحمر يشير إلى «Import».","en":"The Flovoo contacts page with the overflow menu open and a red arrow pointing at Import."},
+"026": {"ar":"لقطة من صفحة الردود السريعة في Flovoo تعرض خمسة ردود محفوظة، وسهم أحمر يشير إلى مقبض إعادة الترتيب.","en":"The Flovoo Quick Replies page showing five saved replies, with a red arrow pointing at the reorder handle."},
+"027": {"ar":"لقطتان من قائمة المحادثات في Flovoo تعرضان وسم مرحلة جهة الاتصال ظاهرًا على صفوف المحادثات.","en":"Two Flovoo chat-list screens showing the contact's stage badge on the conversation rows."}
+}

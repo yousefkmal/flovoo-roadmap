@@ -1,0 +1,10 @@
+{
+"028": {"ar":"لقطة من صفحة حسابات واتساب في Flovoo تعرض الحسابات المرتبطة وحالاتها.","en":"The Flovoo WhatsApp accounts settings page listing the connected accounts and their statuses."},
+"029": {"ar":"لقطتان من Flovoo: قائمة المحادثات، ونافذة «إنشاء سير عمل» لاختيار القنوات والمسؤولين لتوزيع المحادثات تلقائيًا.","en":"Two Flovoo screens: the chat list, and a Create Workflow dialog for choosing channels and assignees to route conversations automatically."},
+"030": {"ar":"لقطة من محادثة في Flovoo عليها رسالة صوتية وقائمة خياراتها مفتوحة، وإطار أحمر حول «Download» وحول زر سرعة التشغيل.","en":"A Flovoo conversation with a voice message and its options menu open, with Download and the playback-speed control both outlined in red."},
+"031": {"ar":"لقطة من صفحة الردود السريعة في Flovoo تعرض خمسة ردود، وسهم أحمر يشير إلى مقبض إعادة الترتيب.","en":"The Flovoo Quick Replies page showing five replies, with a red arrow pointing at the reorder handle."},
+"032": {"ar":"لقطتان من قائمة المحادثات في Flovoo: قائمة إسناد المحادثة إلى عضو من الفريق، والقائمة بعد الإسناد.","en":"Two Flovoo chat-list screens: the menu for assigning a conversation to a team member, and the list after assignment."},
+"033": {"ar":"لقطة من Flovoo وعليها نافذة «إنشاء تذكرة» لإنشاء تذكرة دعم بعنوان ووصف ونوع وأولوية ومرفقات.","en":"A Flovoo screen with a Create ticket dialog for raising a support ticket with a title, description, type, priority and attachments."},
+"034": {"ar":"لقطة من صفحة جهات الاتصال في Flovoo بطريقة عرض كانبان: أعمدة المراحل وبطاقات جهات الاتصال داخلها.","en":"The Flovoo contacts page in Kanban view with one column per stage and the contact cards inside them."},
+"035": {"ar":"لقطة من محادثة في Flovoo ولوحة التفاصيل مفتوحة على اليمين، وإطار أحمر حول حقل «الملاحظات».","en":"A Flovoo conversation with the details panel open, the Notes field outlined in red."}
+}

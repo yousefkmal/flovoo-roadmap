@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE, isLocale } from "@/i18n/config";
+import { HELP_SEGMENT, helpHost } from "@/lib/help/paths";
 
 /**
  * Sends bare paths (`/`, `/changelog`, …) to a locale-prefixed one. The choice
@@ -21,20 +22,63 @@ function resolveLocale(request: NextRequest) {
   return DEFAULT_LOCALE;
 }
 
+/** The locale segment of a prefixed path, or null for a bare one. */
+function localeOf(pathname: string) {
+  return (
+    LOCALES.find(
+      (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
+    ) ?? null
+  );
+}
+
+/**
+ * Whether this request arrived on the help center's own host. The help center
+ * is the same app served from `help.flovoo.com`; nothing else about the request
+ * distinguishes it, so the host is the switch.
+ */
+function isHelpHost(request: NextRequest) {
+  const expected = helpHost();
+  if (!expected) return false;
+  const host = request.headers.get("host")?.split(":")[0].toLowerCase();
+  return host === expected;
+}
+
+/** Routes that keep their own paths on the help host: sign-in and the admin. */
+const HELP_HOST_PASSTHROUGH = ["auth", "admin", HELP_SEGMENT];
+
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  const locale = localeOf(pathname);
 
-  const hasLocale = LOCALES.some(
-    (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
-  );
-  if (hasLocale) return NextResponse.next();
+  if (!locale) {
+    const resolved = resolveLocale(request);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${resolved}${pathname === "/" ? "" : pathname}`;
+    url.search = search;
+    return NextResponse.redirect(url);
+  }
 
-  const locale = resolveLocale(request);
-  const url = request.nextUrl.clone();
-  url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
-  url.search = search;
+  if (isHelpHost(request)) {
+    const rest = pathname.slice(`/${locale}`.length); // "" or "/articles/…"
+    const first = rest.split("/")[1] ?? "";
 
-  return NextResponse.redirect(url);
+    // `/ar/help/…` is the internal shape; on the public host the canonical
+    // address has no prefix, so send anyone who lands there to it.
+    if (first === HELP_SEGMENT) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}${rest.slice(`/${HELP_SEGMENT}`.length)}`;
+      url.search = search;
+      return NextResponse.redirect(url, 308);
+    }
+
+    if (!HELP_HOST_PASSTHROUGH.includes(first)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}/${HELP_SEGMENT}${rest}`;
+      return NextResponse.rewrite(url);
+    }
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

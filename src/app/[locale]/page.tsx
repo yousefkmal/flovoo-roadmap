@@ -5,6 +5,7 @@ import { PageHeading } from "@/components/PageHeading";
 import { BoardSkeleton } from "@/components/roadmap/BoardSkeleton";
 import { RoadmapBoard } from "@/components/roadmap/RoadmapBoard";
 import { SiteFooter } from "@/components/SiteFooter";
+import { helpHomeHref } from "@/lib/help/paths";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
@@ -96,7 +97,11 @@ export default async function RoadmapPage({ params }: PageProps<"/[locale]">) {
         </Suspense>
       </main>
 
-      <SiteFooter locale={locale} updatedAt={lastUpdated} />
+      <SiteFooter
+        locale={locale}
+        updatedAt={lastUpdated}
+        links={[{ label: dict.help.badge, href: helpHomeHref(locale) }]}
+      />
     </>
   );
 }

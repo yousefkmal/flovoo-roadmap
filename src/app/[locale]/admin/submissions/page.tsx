@@ -9,12 +9,14 @@ import { isLocale } from "@/i18n/config";
 import { getAllFeatures, getSubmissions } from "@/lib/data/admin-repository";
 import { getCategories } from "@/lib/data/repository";
 import { formatDate } from "@/lib/format";
+import { requireAdminPage } from "@/lib/auth/admin";
 
 export default async function ModerationPage({
   params,
 }: PageProps<"/[locale]/admin/submissions">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  await requireAdminPage();
 
   const dict = getDictionary(locale);
   const [submissions, categories, features] = await Promise.all([
