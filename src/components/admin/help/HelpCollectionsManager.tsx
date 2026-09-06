@@ -383,6 +383,7 @@ export function errorLabel(dict: Dictionary, error: HelpFieldError): string {
     bodyEmpty: dict.adminHelp.errBodyEmpty,
     invalidIcon: dict.adminHelp.errInvalidIcon,
     altMissing: dict.adminHelp.errAltMissing,
+    summaryLength: dict.adminHelp.errSummaryLength,
     invalidPath: dict.adminHelp.errInvalidPath,
     samePath: dict.adminHelp.errSamePath,
   };

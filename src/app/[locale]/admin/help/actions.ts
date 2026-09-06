@@ -1,5 +1,6 @@
 "use server";
 
+import { summaryBlocksPublish } from "@/lib/help/geo";
 import { articleUrls, pingIndexNow } from "@/lib/help/indexnow";
 import { revalidatePath } from "next/cache";
 
@@ -81,6 +82,7 @@ export type HelpFieldError =
   | "bodyEmpty"
   | "invalidIcon"
   | "altMissing"
+  | "summaryLength"
   | "invalidPath"
   | "samePath";
 
@@ -132,6 +134,10 @@ export interface HelpTranslationPayload {
   body: unknown;
   meta_title: string;
   meta_description: string;
+  /** Phase 7B: the fields that decide whether a passage can be extracted. */
+  answer_summary: string;
+  question_title: string;
+  key_facts: string[];
 }
 
 export interface HelpArticlePayload {
@@ -197,11 +203,29 @@ function validateTranslation(
   // screen reader says and what image search indexes.
   else if (requireAlt && figureWithoutAlt(t.body)) errors[`${prefix}.body`] = "altMissing";
 
+  // The one extraction field publishing enforces: a retrieval system reads the
+  // opening paragraph and little else, so an article without one is invisible
+  // however good the rest of it is. Saving a draft is never blocked.
+  const answerSummary = text(t.answer_summary, 700);
+  if (requireAlt && summaryBlocksPublish(answerSummary.value)) {
+    errors[`${prefix}.answer_summary`] = answerSummary.value ? "summaryLength" : "required";
+  }
+  const questionTitle = text(t.question_title, 200);
+  if (questionTitle.error) errors[`${prefix}.question_title`] = questionTitle.error;
+  const keyFacts = (Array.isArray(t.key_facts) ? t.key_facts : [])
+    .map((fact) => String(fact).trim())
+    .filter(Boolean)
+    .slice(0, 6);
+
   if (Object.keys(errors).some((k) => k.startsWith(`${prefix}.`))) return null;
   return {
     slug,
     title: title.value!,
     excerpt: excerpt.value,
+    answer_summary: answerSummary.value,
+    question_title: questionTitle.value,
+    key_facts: keyFacts,
+    review_due_at: null,
     body: t.body,
     meta_title: metaTitle.value,
     meta_description: metaDescription.value,

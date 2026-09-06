@@ -250,6 +250,21 @@ function Block({ node, dict }: { node: BlockNode; dict: Dictionary }) {
         </blockquote>
       );
 
+    case "definition": {
+      // A description list, because that is what this is: a term and its
+      // meaning. It is also what `DefinedTerm` in the JSON-LD describes.
+      const term = String(node.attrs?.term ?? "").trim();
+      if (!term) return null;
+      return (
+        <dl className="my-3 rounded-card border border-border bg-subtle px-4 py-3">
+          <dt className="font-bold text-text">{term}</dt>
+          <dd className="mt-1 text-text-secondary">
+            <Inline nodes={node.content} />
+          </dd>
+        </dl>
+      );
+    }
+
     case "horizontalRule":
       return <hr />;
 

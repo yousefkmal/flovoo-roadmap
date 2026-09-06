@@ -59,6 +59,14 @@ export interface HelpArticleTranslation {
   meta_title: string | null;
   meta_description: string | null;
   og_image_path: string | null;
+  /** The direct answer, 40-70 words. Required to publish (Phase 7B). */
+  answer_summary: string | null;
+  /** The title as a user would type the question. Optional. */
+  question_title: string | null;
+  /** 3-6 short facts: limits, prices, prerequisites. */
+  key_facts: string[];
+  /** When somebody should check the facts again. */
+  review_due_at: string | null;
   toc: TocEntry[];
   reading_minutes: number;
   created_at: string;
@@ -98,6 +106,12 @@ export interface HelpArticleDetail extends HelpArticleSummary {
   metaDescription: string | null;
   /** An uploaded share image (bucket path), else the generated card is used. */
   ogImagePath: string | null;
+  /** The direct answer, rendered as the lead paragraph and used as the description. */
+  answerSummary: string | null;
+  /** The title phrased as a question, when the writer supplied one. */
+  questionTitle: string | null;
+  /** Short facts shown "at a glance" and emitted as an ItemList. */
+  keyFacts: string[];
   /** The same article in the other language, when it has been translated. */
   alternate: { locale: Locale; slug: string } | null;
   previous: HelpArticleNeighbour | null;
@@ -166,6 +180,12 @@ export interface HelpAdminArticleRow {
   publishedAt: string | null;
   /** Any figure in either language still carrying a machine-written alt. */
   hasDraftAlt: boolean;
+  /** A translation exists with no answer summary — it cannot be published. */
+  needsSummary: boolean;
+  /** The earliest review date across its translations. */
+  reviewDueAt: string | null;
+  /** Whether that date has passed. Computed server-side, never during render. */
+  reviewDue: boolean;
 }
 
 /** Everything the editor needs for one article. */

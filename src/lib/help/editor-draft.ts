@@ -17,6 +17,10 @@ export interface TranslationDraft {
   body: BlockDocument;
   meta_title: string;
   meta_description: string;
+  /** Phase 7B: what makes a passage liftable. */
+  answer_summary: string;
+  question_title: string;
+  key_facts: string[];
 }
 
 export interface ArticleDraft {
@@ -44,4 +48,7 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
   body: EMPTY_DOCUMENT,
   meta_title: "",
   meta_description: "",
+  answer_summary: "",
+  question_title: "",
+  key_facts: [],
 };

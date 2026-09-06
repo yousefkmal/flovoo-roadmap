@@ -47,7 +47,11 @@ export default async function HelpArticlesPage({
           ? !row.ar
           : coverageFilter === "alt-unreviewed"
             ? row.hasDraftAlt
-            : true,
+            : coverageFilter === "needs-summary"
+              ? row.needsSummary
+              : coverageFilter === "review-due"
+                ? row.reviewDue
+                : true,
     )
     .map((row) => {
       const own = row[locale];
@@ -108,6 +112,8 @@ export default async function HelpArticlesPage({
             <option value="missing-en">{dict.adminHelp.coverageMissingEn}</option>
             <option value="missing-ar">{dict.adminHelp.coverageMissingAr}</option>
             <option value="alt-unreviewed">{dict.adminHelp.coverageAltUnreviewed}</option>
+            <option value="needs-summary">{dict.adminHelp.coverageNeedsSummary}</option>
+            <option value="review-due">{dict.adminHelp.coverageReviewDue}</option>
           </select>
         </label>
         {/* Selects submit on change via the button for keyboard users; the

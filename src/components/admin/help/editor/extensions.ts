@@ -1,6 +1,6 @@
 import { Mark, Node, ReactNodeViewRenderer, mergeAttributes } from "@tiptap/react";
 
-import { CalloutView, FaqItemView, FigureView, VideoView } from "./node-views";
+import { CalloutView, DefinitionView, FaqItemView, FigureView, VideoView } from "./node-views";
 
 /**
  * The help center's block vocabulary as Tiptap extensions. Node and mark names
@@ -21,6 +21,8 @@ export interface PickedImage {
 }
 
 export interface EditorLabels {
+  definitionTerm: string;
+  definitionPlaceholder: string;
   figureAlt: string;
   figureAltUnreviewed: string;
   figureCaption: string;
@@ -47,6 +49,7 @@ export interface HelpEditorOptions {
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     helpSteps: { toggleSteps: () => ReturnType };
+    helpDefinition: { insertDefinition: () => ReturnType };
     helpCallout: {
       setCallout: (variant: "info" | "warning" | "tip") => ReturnType;
       unsetCallout: () => ReturnType;
@@ -124,6 +127,36 @@ export const Callout = Node.create<HelpEditorOptions>({
 // ---------------------------------------------------------------------------
 // Figure — an image with alt text and a caption
 // ---------------------------------------------------------------------------
+
+/**
+ * A glossary entry: a term and one sentence saying what it means.
+ *
+ * Worth its own block rather than a bold paragraph because it is emitted as
+ * `DefinedTerm` in JSON-LD. Assistants answering "what is a WABA?" look for
+ * exactly this shape, and Arabic technical glossaries are thin enough that a
+ * clear one is disproportionately likely to be the source that gets quoted.
+ */
+export const Definition = Node.create<HelpEditorOptions>({
+  name: "definition",
+  group: "block",
+  content: "inline*",
+  defining: true,
+  addAttributes: () => ({ term: { default: "" } }),
+  parseHTML: () => [{ tag: 'div[data-type="definition"]' }],
+  renderHTML: ({ HTMLAttributes }) =>
+    ["div", mergeAttributes(HTMLAttributes, { "data-type": "definition" }), 0],
+  addNodeView() {
+    return ReactNodeViewRenderer(DefinitionView);
+  },
+  addCommands() {
+    return {
+      insertDefinition:
+        () =>
+        ({ commands }) =>
+          commands.insertContent({ type: this.name, attrs: { term: "" } }),
+    };
+  },
+});
 
 export const Figure = Node.create<HelpEditorOptions>({
   name: "figure",

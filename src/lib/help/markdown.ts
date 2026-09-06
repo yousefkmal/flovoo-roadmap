@@ -79,6 +79,11 @@ function block(node: BlockNode, depth = 0): string {
     }
     case "codeBlock":
       return ["```", nodeText(node), "```"].join("\n");
+    case "definition": {
+      const term = String(node.attrs?.term ?? "").trim();
+      const meaning = inline(node.content).trim();
+      return term ? `**${term}** — ${meaning}` : meaning;
+    }
     case "horizontalRule":
       return "---";
     case "table":

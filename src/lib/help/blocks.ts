@@ -162,6 +162,11 @@ function blockText(node: BlockNode): string {
           return `${question}\n${answer}`;
         })
         .join("\n\n");
+    case "definition": {
+      const term = String(node.attrs?.term ?? "").trim();
+      const meaning = nodeText(node).trim();
+      return term ? `${term}: ${meaning}` : meaning;
+    }
     case "codeBlock":
       return nodeText(node);
     default:

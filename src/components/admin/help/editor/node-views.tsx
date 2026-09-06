@@ -50,6 +50,26 @@ export function CalloutView({ node, updateAttributes, extension }: NodeViewProps
   );
 }
 
+export function DefinitionView({ node, updateAttributes, extension }: NodeViewProps) {
+  const { labels } = extension.options as Options;
+  return (
+    <NodeViewWrapper
+      as="div"
+      data-drag-handle
+      className="my-3 rounded-card border border-border bg-subtle p-3"
+    >
+      <input
+        contentEditable={false}
+        value={(node.attrs.term as string) ?? ""}
+        onChange={(event) => updateAttributes({ term: event.target.value })}
+        placeholder={labels.definitionTerm}
+        className={`${inputClass} mb-1.5 font-bold`}
+      />
+      <NodeViewContent className="text-sm text-text-secondary" />
+    </NodeViewWrapper>
+  );
+}
+
 export function FigureView({ node, updateAttributes, deleteNode, extension, selected }: NodeViewProps) {
   const { labels, pickImage } = extension.options as Options;
   const src = node.attrs.src as string | null;

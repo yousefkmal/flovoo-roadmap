@@ -1,5 +1,6 @@
 "use client";
 
+import { GeoPanel } from "./GeoPanel";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ExternalLink, Monitor, Smartphone } from "lucide-react";
@@ -217,6 +218,7 @@ export function HelpArticleEditor({
                 onChange={(next) => patchTranslation(language, next)}
                 err={(field) => err(`${language}.${field}`)}
                 t={t}
+                dictionary={dict}
               />
               <div>
                 <p className="mb-1.5 text-sm font-semibold text-text">{t.fieldBody}</p>
@@ -339,12 +341,14 @@ function TranslationFields({
   onChange,
   err,
   t,
+  dictionary,
 }: {
   language: Locale;
   draft: TranslationDraft;
   onChange: (next: Partial<TranslationDraft>) => void;
   err: (field: string) => string | undefined;
   t: Dictionary["adminHelp"];
+  dictionary: Dictionary;
 }) {
   const dir = language === "ar" ? "rtl" : "ltr";
   const id = (field: string) => `${language}-${field}`;
@@ -362,10 +366,44 @@ function TranslationFields({
         </div>
         <p className="mt-1 text-xs text-text-tertiary">{t.slugHint}</p>
       </Field>
+      {/* The paragraph a retrieval system reads first, so it sits directly
+          under the title rather than among the SEO fields at the bottom. */}
+      <div className="sm:col-span-2">
+        <Field id={id("answer-summary")} label={t.fieldAnswerSummary} hint={t.answerSummaryHint} error={err("answer_summary")}>
+          <textarea id={id("answer-summary")} dir={dir} lang={language} rows={3} value={draft.answer_summary} onChange={(e) => onChange({ answer_summary: e.target.value })} aria-invalid={Boolean(err("answer_summary"))} className={`${FIELD_CLASS} text-start`} />
+        </Field>
+      </div>
+      <div className="sm:col-span-2">
+        <Field id={id("question-title")} label={t.fieldQuestionTitle} hint={t.questionTitleHint} error={err("question_title")}>
+          <input id={id("question-title")} dir={dir} lang={language} value={draft.question_title} onChange={(e) => onChange({ question_title: e.target.value })} className={`${FIELD_CLASS} text-start`} />
+        </Field>
+      </div>
+      <div className="sm:col-span-2">
+        <Field id={id("key-facts")} label={t.fieldKeyFacts} hint={t.keyFactsHint}>
+          {/* One per line is the shape writers already use; splitting here
+              keeps the stored value a clean array. */}
+          <textarea
+            id={id("key-facts")}
+            dir={dir}
+            lang={language}
+            rows={3}
+            value={draft.key_facts.join("\n")}
+            onChange={(e) =>
+              onChange({
+                key_facts: e.target.value.split("\n").map((line) => line.trim()).filter(Boolean).slice(0, 6),
+              })
+            }
+            className={`${FIELD_CLASS} text-start`}
+          />
+        </Field>
+      </div>
       <div className="sm:col-span-2">
         <Field id={id("excerpt")} label={t.fieldExcerpt} hint={t.excerptHint} error={err("excerpt")}>
           <textarea id={id("excerpt")} dir={dir} lang={language} rows={2} value={draft.excerpt} onChange={(e) => onChange({ excerpt: e.target.value })} className={`${FIELD_CLASS} text-start`} />
         </Field>
+      </div>
+      <div className="sm:col-span-2">
+        <GeoPanel draft={draft} locale={language} dict={dictionary} />
       </div>
       <Field id={id("meta-title")} label={t.fieldMetaTitle} error={err("meta_title")}>
         <input id={id("meta-title")} dir={dir} lang={language} value={draft.meta_title} onChange={(e) => onChange({ meta_title: e.target.value })} className={`${FIELD_CLASS} text-start`} />

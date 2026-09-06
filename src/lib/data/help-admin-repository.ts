@@ -54,6 +54,8 @@ type TranslationHead = Pick<
 > & {
   /** Generated column (migration 0014). Absent from the local store's rows. */
   has_draft_alt?: boolean;
+  answer_summary?: string | null;
+  review_due_at?: string | null;
 };
 
 /** The same thing migration 0014's generated column computes, for the local store. */
@@ -70,11 +72,15 @@ async function translationHeads(): Promise<TranslationHead[]> {
     return localHelpContent().translations.map((t) => ({
       ...t,
       has_draft_alt: bodyHasDraftAlt(t.body),
+      answer_summary: t.answer_summary,
+      review_due_at: t.review_due_at,
     }));
   }
   const { data, error } = await supabase
     .from("help_article_translations")
-    .select("id, article_id, language, slug, title, updated_at, has_draft_alt");
+    .select(
+      "id, article_id, language, slug, title, updated_at, has_draft_alt, answer_summary, review_due_at",
+    );
   if (error) throw new Error(`Failed to load help translations: ${error.message}`);
   return data as TranslationHead[];
 }
@@ -99,6 +105,10 @@ export async function getAdminHelpArticles(): Promise<HelpAdminArticleRow[]> {
       const collection = collectionById.get(article.collection_id);
       if (!collection) return [];
       const t = headsByArticle.get(article.id) ?? {};
+      const earliestReview =
+        [t.ar?.review_due_at, t.en?.review_due_at]
+          .filter((v): v is string => Boolean(v))
+          .sort()[0] ?? null;
       const updatedAt = [article.updated_at, t.ar?.updated_at, t.en?.updated_at]
         .filter((v): v is string => Boolean(v))
         .sort()
@@ -125,6 +135,15 @@ export async function getAdminHelpArticles(): Promise<HelpAdminArticleRow[]> {
           updatedAt,
           publishedAt: article.published_at,
           hasDraftAlt: Boolean(t.ar?.has_draft_alt || t.en?.has_draft_alt),
+          // Cheap signals only: the full readiness score needs the body, which
+          // a list of 70 articles has no business loading.
+          needsSummary: (["ar", "en"] as const).some(
+            (language) => t[language] && !String(t[language]?.answer_summary ?? "").trim(),
+          ),
+          reviewDueAt: earliestReview,
+          // Decided here rather than in the page: `Date.now()` during render is
+          // exactly the impurity this codebase has been bitten by before.
+          reviewDue: Boolean(earliestReview && Date.parse(earliestReview) <= Date.now()),
         },
       ];
     })

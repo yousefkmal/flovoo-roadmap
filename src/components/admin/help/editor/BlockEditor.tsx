@@ -5,6 +5,7 @@ import { TableKit } from "@tiptap/extension-table";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
+  BookMarked,
   Bold,
   Code,
   Heading2,
@@ -35,6 +36,7 @@ import type { Locale } from "@/lib/types";
 
 import {
   Callout,
+  Definition,
   Faq,
   FaqItem,
   Figure,
@@ -87,9 +89,11 @@ export function BlockEditor({
       Step,
       Ltr,
       Faq,
-      ...[Callout, Figure, Video, FaqItem].map((extension) =>
+      ...[Callout, Definition, Figure, Video, FaqItem].map((extension) =>
         extension.configure({
           labels: {
+            definitionTerm: labels.definitionTerm,
+            definitionPlaceholder: labels.definitionPlaceholder,
             figureAlt: labels.figureAlt,
             figureAltUnreviewed: labels.figureAltUnreviewed,
             figureCaption: labels.figureCaption,
@@ -219,6 +223,7 @@ function Toolbar({
       <Btn Icon={List} label={labels.tbBullet} active={state.bullet} onClick={() => editor.chain().focus().toggleBulletList().run()} />
       <Btn Icon={ListOrdered} label={labels.tbOrdered} active={state.ordered} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
       <Btn Icon={ListChecks} label={labels.tbSteps} active={state.steps} onClick={() => editor.chain().focus().toggleSteps().run()} />
+      <Btn Icon={BookMarked} label={labels.tbDefinition} onClick={() => editor.chain().focus().insertDefinition().run()} />
       <Sep />
       <Btn Icon={Info} label={labels.tbCalloutInfo} active={state.info} onClick={() => callout("info", state.info)} />
       <Btn Icon={TriangleAlert} label={labels.tbCalloutWarning} active={state.warning} onClick={() => callout("warning", state.warning)} />

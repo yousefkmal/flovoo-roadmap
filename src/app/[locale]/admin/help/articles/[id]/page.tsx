@@ -31,6 +31,9 @@ function toDraft(translation: HelpArticleTranslation | undefined): TranslationDr
     body: translation.body,
     meta_title: translation.meta_title ?? "",
     meta_description: translation.meta_description ?? "",
+    answer_summary: translation.answer_summary ?? "",
+    question_title: translation.question_title ?? "",
+    key_facts: Array.isArray(translation.key_facts) ? translation.key_facts : [],
   };
 }
 

@@ -64,6 +64,11 @@ export interface HelpTranslationInput {
   body: BlockDocument;
   meta_title: string | null;
   meta_description: string | null;
+  /** Phase 7B: the extraction fields. */
+  answer_summary: string | null;
+  question_title: string | null;
+  key_facts: string[];
+  review_due_at: string | null;
 }
 
 export interface HelpArticleInput {
@@ -90,6 +95,14 @@ function translationRow(
     slug: input.slug,
     title: input.title,
     excerpt: input.excerpt,
+    answer_summary: input.answer_summary,
+    question_title: input.question_title,
+    key_facts: input.key_facts,
+    // Six months from now unless the writer set a date themselves.
+    review_due_at:
+      input.review_due_at ??
+      existing?.review_due_at ??
+      new Date(Date.parse(now) + 182 * 24 * 60 * 60 * 1000).toISOString(),
     body: input.body,
     meta_title: input.meta_title,
     meta_description: input.meta_description,

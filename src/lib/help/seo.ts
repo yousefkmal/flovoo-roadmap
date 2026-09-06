@@ -116,6 +116,10 @@ export function techArticleJsonLd(input: {
   publishedAt: string | null;
   updatedAt: string;
   sectionName: string;
+  /** The title as a user would ask it (Phase 7B), when one was written. */
+  questionTitle?: string | null;
+  /** Short facts most likely to be quoted: limits, prices, prerequisites. */
+  keyFacts?: string[];
 }) {
   return {
     "@context": "https://schema.org",
@@ -129,8 +133,62 @@ export function techArticleJsonLd(input: {
     datePublished: input.publishedAt ?? undefined,
     dateModified: input.updatedAt,
     articleSection: input.sectionName,
+    // The question a user would actually type, offered alongside the headline
+    // so a match on the question is a match on the article.
+    alternativeHeadline: input.questionTitle ?? undefined,
+    // Limits, prices, prerequisites — the parts most likely to be quoted.
+    ...(input.keyFacts?.length
+      ? {
+          about: {
+            "@type": "ItemList",
+            itemListElement: input.keyFacts.map((fact, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              name: fact,
+            })),
+          },
+        }
+      : {}),
     author: ORGANIZATION,
     publisher: ORGANIZATION,
+  };
+}
+
+/**
+ * Every Definition block, as `DefinedTerm`.
+ *
+ * "What is a WABA?" is one of the commonest shapes of question put to an
+ * assistant, and Arabic technical glossaries are thin — a clear one is
+ * disproportionately likely to be the source that gets quoted.
+ */
+export function definedTerms(body: BlockDocument): { term: string; description: string }[] {
+  const terms: { term: string; description: string }[] = [];
+  const walk = (node: BlockNode) => {
+    if (node.type === "definition") {
+      const term = String(node.attrs?.term ?? "").trim();
+      const description = toPlainText({ type: "doc", content: node.content ?? [] }).trim();
+      if (term && description) terms.push({ term, description });
+    }
+    node.content?.forEach(walk);
+  };
+  walk(body);
+  return terms;
+}
+
+export function definedTermJsonLd(
+  terms: { term: string; description: string }[],
+  locale: Locale,
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    inLanguage: locale,
+    hasDefinedTerm: terms.map((t) => ({
+      "@type": "DefinedTerm",
+      name: t.term,
+      description: t.description,
+      inDefinedTermSet: { "@type": "DefinedTermSet", name: "Flovoo" },
+    })),
   };
 }
 

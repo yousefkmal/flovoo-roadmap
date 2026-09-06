@@ -1124,6 +1124,11 @@ function translation(
     language,
     slug: t.slug,
     title: t.title,
+    // The seed predates Phase 7B; real articles fill these in through the editor.
+    answer_summary: null,
+    question_title: null,
+    key_facts: [],
+    review_due_at: null,
     excerpt: t.excerpt,
     body: t.body,
     meta_title: null,

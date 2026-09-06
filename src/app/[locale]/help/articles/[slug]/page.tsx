@@ -31,6 +31,8 @@ import {
   breadcrumbJsonLd,
   faqPageJsonLd,
   faqPairs,
+  definedTermJsonLd,
+  definedTerms,
   helpOgImageUrl,
   helpRobots,
   helpSocialMetadata,
@@ -85,7 +87,10 @@ export async function generateMetadata({
 
   const collectionName =
     locale === "ar" ? article.collection.name_ar : article.collection.name_en;
-  const description = article.metaDescription ?? article.excerpt ?? dict.help.metaDescription;
+  // One sentence maintained once: the summary is the lead paragraph, the meta
+  // description and the JSON-LD description, rather than three copies drifting.
+  const description =
+    article.answerSummary ?? article.metaDescription ?? article.excerpt ?? dict.help.metaDescription;
   const image = helpOgImageUrl(
     locale,
     article.title,
@@ -174,7 +179,7 @@ export default async function HelpArticlePage({
         data={techArticleJsonLd({
           locale,
           title: article.title,
-          description: article.metaDescription ?? article.excerpt,
+          description: article.answerSummary ?? article.metaDescription ?? article.excerpt,
           url: helpArticleHref(locale, article.slug),
           image: helpOgImageUrl(
             locale,
@@ -184,6 +189,8 @@ export default async function HelpArticlePage({
           ),
           publishedAt: article.publishedAt,
           updatedAt: article.updatedAt,
+          questionTitle: article.questionTitle,
+          keyFacts: article.keyFacts,
           sectionName: collectionName,
         })}
       />
@@ -194,7 +201,21 @@ export default async function HelpArticlePage({
           { name: article.title, href: helpArticleHref(locale, article.slug) },
         ])}
       />
-      {faqPairs(article.body).length > 0 ? <JsonLd data={faqPageJsonLd(faqPairs(article.body))} /> : null}
+      {/* The question-style title is itself a Q/A pair: it is the phrasing a
+          person actually types, answered by the summary. */}
+      {faqPairs(article.body).length > 0 || (article.questionTitle && article.answerSummary) ? (
+        <JsonLd
+          data={faqPageJsonLd([
+            ...(article.questionTitle && article.answerSummary
+              ? [{ question: article.questionTitle, answer: article.answerSummary }]
+              : []),
+            ...faqPairs(article.body),
+          ])}
+        />
+      ) : null}
+      {definedTerms(article.body).length > 0 ? (
+        <JsonLd data={definedTermJsonLd(definedTerms(article.body), locale)} />
+      ) : null}
 
       <HelpShell locale={locale} collections={navigation} active={active}>
         <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
@@ -230,8 +251,12 @@ export default async function HelpArticlePage({
                     dict={dict}
                   />
                 </div>
-                {article.excerpt ? (
-                  <p className="mt-2 text-base leading-6 text-text-secondary">{article.excerpt}</p>
+                {/* The lead paragraph. Semantically the first <p> after the
+                    <h1>, which is the passage a retrieval system reads. */}
+                {article.answerSummary || article.excerpt ? (
+                  <p className="mt-2 text-base leading-6 text-text-secondary">
+                    {article.answerSummary || article.excerpt}
+                  </p>
                 ) : null}
                 <p className="numeric mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-text-tertiary">
                   <span className="inline-flex items-center gap-1.5">
@@ -246,6 +271,17 @@ export default async function HelpArticlePage({
                   </span>
                 </p>
               </header>
+
+              {article.keyFacts.length > 0 ? (
+                <aside className="mt-5 rounded-card border border-border bg-subtle p-4">
+                  <h2 className="mb-2 text-sm font-bold text-text">{dict.help.atAGlance}</h2>
+                  <ul className="flex list-disc flex-col gap-1.5 ps-5 text-sm text-text-secondary">
+                    {article.keyFacts.map((fact, index) => (
+                      <li key={index}>{fact}</li>
+                    ))}
+                  </ul>
+                </aside>
+              ) : null}
 
               <div className="mt-5 xl:hidden">
                 <TableOfContents

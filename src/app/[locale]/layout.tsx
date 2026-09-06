@@ -54,6 +54,15 @@ export async function generateMetadata({
     // Without this the share card's image stays relative, and every scraper
     // that fetches the page from outside drops it.
     metadataBase: siteUrl(),
+    // Search Console and Bing Webmaster Tools each want one token in a meta
+    // tag. Set the variable, redeploy, press Verify — no file to commit and
+    // nothing to remove afterwards. Absent, no tag is emitted.
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+      other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+        ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+        : undefined,
+    },
     title: { default: dict.site.title, template: `%s · ${dict.site.name}` },
     description: dict.site.metaDescription,
     alternates: {
