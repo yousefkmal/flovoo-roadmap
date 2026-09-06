@@ -92,6 +92,8 @@ export async function buildLlmsFullTxt(): Promise<string> {
           collection: article.collectionName,
           updatedAt: article.updatedAt,
           excerpt: article.excerpt,
+          answerSummary: article.answerSummary,
+          keyFacts: article.keyFacts,
           body: article.body,
         }),
       );

@@ -35,6 +35,8 @@ export async function GET(
     collection: locale === "ar" ? article.collection.name_ar : article.collection.name_en,
     updatedAt: article.updatedAt,
     excerpt: article.excerpt,
+    answerSummary: article.answerSummary,
+    keyFacts: article.keyFacts,
     body: article.body,
   });
 

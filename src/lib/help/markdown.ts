@@ -141,6 +141,9 @@ export interface MarkdownArticle {
   collection: string;
   updatedAt: string;
   excerpt: string | null;
+  /** The Phase 7B answer, when the article has one. */
+  answerSummary?: string | null;
+  keyFacts?: string[];
   body: BlockDocument;
 }
 
@@ -159,11 +162,17 @@ export function articleToMarkdown(article: MarkdownArticle): string {
     .map((node) => block(node))
     .filter((chunk) => chunk.trim())
     .join("\n\n");
+  // The answer summary is written to be lifted out of the page; when there is
+  // one it leads, because the excerpt is a promise of an answer and this is
+  // the answer. Falling back to the excerpt keeps every article readable.
+  const lede = article.answerSummary?.trim() || article.excerpt;
+  const facts = (article.keyFacts ?? []).filter((fact) => fact.trim());
   return [
     front.join("\n"),
     "",
     `# ${article.title}`,
-    ...(article.excerpt ? ["", article.excerpt] : []),
+    ...(lede ? ["", lede] : []),
+    ...(facts.length ? ["", ...facts.map((fact) => `- ${fact}`)] : []),
     "",
     body,
     "",

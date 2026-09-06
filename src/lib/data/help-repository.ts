@@ -214,6 +214,8 @@ export async function getPublishedArticlesForExport(
     slug: string;
     title: string;
     excerpt: string | null;
+    answerSummary: string | null;
+    keyFacts: string[];
     body: HelpArticleTranslation["body"];
     updatedAt: string;
     collectionName: string;
@@ -235,6 +237,8 @@ export async function getPublishedArticlesForExport(
           slug: translation.slug,
           title: translation.title,
           excerpt: translation.excerpt,
+          answerSummary: translation.answer_summary,
+          keyFacts: Array.isArray(translation.key_facts) ? translation.key_facts : [],
           body: translation.body,
           updatedAt: article.updated_at,
           collectionName: locale === "ar" ? collection.name_ar : collection.name_en,

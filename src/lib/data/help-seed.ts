@@ -199,6 +199,14 @@ interface SeedTranslation {
   excerpt: string;
   body: BlockDocument;
   meta_description?: string;
+  /**
+   * Phase 7B extraction fields. One seed article fills them so the rendered
+   * summary, the question-shaped title and the key-facts table are exercised
+   * locally; leaving every seed row null meant that path never ran.
+   */
+  answer_summary?: string;
+  question_title?: string;
+  key_facts?: string[];
 }
 
 interface SeedArticle {
@@ -233,6 +241,14 @@ const SEED_ARTICLES: SeedArticle[] = [
       slug: "إنشاء-حساب-وإعداد-مساحة-العمل",
       title: "إنشاء حساب فلوفو وإعداد مساحة العمل",
       excerpt: "من التسجيل إلى أول محادثة: الخطوات الأساسية لتجهيز حسابك في أقل من عشر دقائق.",
+      answer_summary:
+        "إنشاء حساب فلوفو يتم من app.flovoo.com ببريد العمل، ثم تسمية مساحة العمل وتحديد الدولة والمنطقة الزمنية. الإعداد يستغرق أقل من عشر دقائق ولا يُعاد إلا مرة واحدة لكل شركة.",
+      question_title: "كيف أنشئ حساب فلوفو وأجهّز مساحة العمل؟",
+      key_facts: [
+        "الإعداد يستغرق أقل من عشر دقائق.",
+        "يلزم بريد إلكتروني للعمل، لا بريد شخصي.",
+        "مساحة عمل واحدة لكل شركة.",
+      ],
       body: doc(
         p(
           "مساحة العمل (Workspace) هي المكان الذي تجتمع فيه قنواتك وفريقك ومحادثاتك. تحتاج إلى إعدادها مرة واحدة فقط، ثم يمكن لأي عضو في الفريق الانضمام إليها.",
@@ -277,6 +293,14 @@ const SEED_ARTICLES: SeedArticle[] = [
       slug: "create-account-and-set-up-workspace",
       title: "Create your Flovoo account and set up your workspace",
       excerpt: "From sign-up to your first conversation: the essential steps to get your account ready in under ten minutes.",
+      answer_summary:
+        "You create a Flovoo account at app.flovoo.com with a work email address, then name the workspace and set its country and time zone. Setup takes under ten minutes and is done once per company.",
+      question_title: "How do I create a Flovoo account and set up a workspace?",
+      key_facts: [
+        "Setup takes under ten minutes.",
+        "A work email address is required, not a personal one.",
+        "One workspace per company.",
+      ],
       body: doc(
         p(
           "Your workspace is where your channels, your team and your conversations come together. You set it up once, and anyone on the team can join it afterwards.",
@@ -1124,10 +1148,11 @@ function translation(
     language,
     slug: t.slug,
     title: t.title,
-    // The seed predates Phase 7B; real articles fill these in through the editor.
-    answer_summary: null,
-    question_title: null,
-    key_facts: [],
+    // Real articles fill these in through the editor; most seed rows leave
+    // them empty, which is the common case a page must still render.
+    answer_summary: t.answer_summary ?? null,
+    question_title: t.question_title ?? null,
+    key_facts: t.key_facts ?? [],
     review_due_at: null,
     excerpt: t.excerpt,
     body: t.body,
