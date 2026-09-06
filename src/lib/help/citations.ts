@@ -119,13 +119,57 @@ export interface RunSummary {
   cited: number;
   errors: number;
   skipped: boolean;
+  /** Prompts left unasked because the invocation ran out of time. */
+  remaining: number;
+}
+
+export interface RunOptions {
+  limit?: number;
+  /**
+   * How many questions to have in flight at once. A search-enabled answer takes
+   * around fifteen seconds, so asking them one at a time does not fit in a
+   * serverless invocation: the first real run reached 17 of 30 and was killed
+   * at the 300s ceiling.
+   */
+  concurrency?: number;
+  /** Stop starting new questions after this moment, and report what is left. */
+  deadline?: number;
+  /**
+   * A prompt already asked this recently is not asked again, so an invocation
+   * that ran out of time resumes where it stopped instead of repeating work
+   * that has already been paid for.
+   */
+  freshnessHours?: number;
+}
+
+/** Runs `work` over `items` with at most `concurrency` in flight. */
+async function pooled<T>(
+  items: T[],
+  concurrency: number,
+  work: (item: T) => Promise<void>,
+): Promise<void> {
+  let next = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (next < items.length) {
+      const index = next++;
+      await work(items[index]);
+    }
+  });
+  await Promise.all(workers);
 }
 
 /**
  * One pass over the active prompts. Small on purpose: sixty prompts a week
  * across the configured providers, well inside anyone's terms of use.
  */
-export async function runCitationCheck(limit = 60): Promise<RunSummary[]> {
+export async function runCitationCheck(options: RunOptions = {}): Promise<RunSummary[]> {
+  const {
+    limit = 60,
+    concurrency = 5,
+    deadline = Date.now() + 240_000,
+    freshnessHours = 20,
+  } = options;
+
   const supabase = getServiceSupabase();
   if (!supabase) return [];
 
@@ -136,18 +180,40 @@ export async function runCitationCheck(limit = 60): Promise<RunSummary[]> {
     .limit(limit);
 
   const rows = (prompts ?? []) as { id: string; prompt: string; language: "ar" | "en" }[];
+  const since = new Date(Date.now() - freshnessHours * 3600_000).toISOString();
   const summaries: RunSummary[] = [];
 
   for (const provider of providers()) {
     if (!provider.isConfigured) {
-      summaries.push({ provider: provider.id, asked: 0, cited: 0, errors: 0, skipped: true });
+      summaries.push({
+        provider: provider.id,
+        asked: 0,
+        cited: 0,
+        errors: 0,
+        skipped: true,
+        remaining: 0,
+      });
       continue;
     }
+
+    const { data: recent } = await supabase
+      .from("help_geo_runs")
+      .select("prompt_id")
+      .eq("provider", provider.id)
+      .gte("ts", since);
+    const done = new Set((recent ?? []).map((r) => (r as { prompt_id: string }).prompt_id));
+    const todo = rows.filter((row) => !done.has(row.id));
+
     let asked = 0;
     let cited = 0;
     let errors = 0;
+    let ranOutOfTime = 0;
 
-    for (const prompt of rows) {
+    await pooled(todo, concurrency, async (prompt) => {
+      if (Date.now() > deadline) {
+        ranOutOfTime++;
+        return;
+      }
       const result = await provider.ask(prompt.prompt, prompt.language);
       asked++;
       if (result.error) errors++;
@@ -166,8 +232,16 @@ export async function runCitationCheck(limit = 60): Promise<RunSummary[]> {
         competitor_domains: verdict.competitorDomains,
         error: result.error ?? null,
       });
-    }
-    summaries.push({ provider: provider.id, asked, cited, errors, skipped: false });
+    });
+
+    summaries.push({
+      provider: provider.id,
+      asked,
+      cited,
+      errors,
+      skipped: false,
+      remaining: ranOutOfTime,
+    });
   }
   return summaries;
 }
