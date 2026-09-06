@@ -33,6 +33,18 @@ export default async function sitemap({ id }: { id: string }): Promise<MetadataR
 
   const entries: MetadataRoute.Sitemap = [
     {
+      url: absoluteUrl(`${helpHomeHref(locale)}/about`),
+      changeFrequency: "monthly",
+      priority: 0.6,
+      alternates: { languages: { ar: absoluteUrl(`${helpHomeHref("ar")}/about`), en: absoluteUrl(`${helpHomeHref("en")}/about`) } },
+    },
+    {
+      url: absoluteUrl(`${helpHomeHref(locale)}/glossary`),
+      changeFrequency: "weekly",
+      priority: 0.5,
+      alternates: { languages: { ar: absoluteUrl(`${helpHomeHref("ar")}/glossary`), en: absoluteUrl(`${helpHomeHref("en")}/glossary`) } },
+    },
+    {
       url: absoluteUrl(helpHomeHref(locale)),
       changeFrequency: "daily",
       priority: 1,

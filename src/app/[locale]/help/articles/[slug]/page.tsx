@@ -1,7 +1,7 @@
 import { CopyPageMenu } from "@/components/help/CopyPageMenu";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
-import { CalendarDays, Clock } from "lucide-react";
+import { CalendarDays, Clock, Users } from "lucide-react";
 
 import { ArticleBody } from "@/components/help/ArticleBody";
 import { JsonLd } from "@/components/help/JsonLd";
@@ -269,6 +269,12 @@ export default async function HelpArticlePage({
                     <Clock className="size-3.5" strokeWidth={2} aria-hidden />
                     {readingTimeLabel(dict, locale, article.readingMinutes)}
                   </span>
+                  {/* Attributed to the team, not a person — company preference,
+                      and it matches the Organization author in the JSON-LD. */}
+                  <span className="inline-flex items-center gap-1.5">
+                    <Users className="size-3.5" strokeWidth={2} aria-hidden />
+                    {dict.help.byTeam}
+                  </span>
                 </p>
               </header>
 
@@ -329,6 +335,8 @@ export default async function HelpArticlePage({
         locale={locale}
         updatedAt={article.updatedAt}
         links={helpFooterLinks(locale, siteUrl(), {
+          about: dict.help.aboutTitle,
+          glossary: dict.help.glossaryTitle,
           roadmap: dict.help.roadmapLink,
           updates: dict.nav.updates,
         })}

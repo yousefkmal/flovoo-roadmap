@@ -46,6 +46,14 @@ export function helpArticleHref(locale: Locale, slug: string): string {
   return `${base(locale)}/articles/${encodeURIComponent(slug)}`;
 }
 
+export function helpAboutHref(locale: Locale): string {
+  return `${base(locale)}/about`;
+}
+
+export function helpGlossaryHref(locale: Locale): string {
+  return `${base(locale)}/glossary`;
+}
+
 /** The results page arrives in Phase 2; the form on the home page already posts here. */
 export function helpSearchHref(locale: Locale): string {
   return `${base(locale)}/search`;
@@ -72,9 +80,11 @@ export function decodeSlug(raw: string): string {
 export function helpFooterLinks(
   locale: Locale,
   siteOrigin: URL,
-  labels: { roadmap: string; updates: string },
+  labels: { about: string; glossary: string; roadmap: string; updates: string },
 ): { label: string; href: string }[] {
   return [
+    { label: labels.about, href: helpAboutHref(locale) },
+    { label: labels.glossary, href: helpGlossaryHref(locale) },
     { label: labels.roadmap, href: new URL(`/${locale}`, siteOrigin).toString() },
     { label: labels.updates, href: new URL(`/${locale}/updates`, siteOrigin).toString() },
   ];

@@ -197,6 +197,8 @@ export default async function HelpCategoryPage({
         locale={locale}
         updatedAt={lastUpdated}
         links={helpFooterLinks(locale, siteUrl(), {
+          about: dict.help.aboutTitle,
+          glossary: dict.help.glossaryTitle,
           roadmap: dict.help.roadmapLink,
           updates: dict.nav.updates,
         })}

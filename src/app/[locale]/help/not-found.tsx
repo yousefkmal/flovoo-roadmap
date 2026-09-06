@@ -104,6 +104,8 @@ export default async function HelpNotFound() {
         locale={locale}
         updatedAt={null}
         links={helpFooterLinks(locale, siteUrl(), {
+          about: dict.help.aboutTitle,
+          glossary: dict.help.glossaryTitle,
           roadmap: dict.help.roadmapLink,
           updates: dict.nav.updates,
         })}

@@ -1,3 +1,4 @@
+import { BRAND } from "@/config/brand";
 import type { Metadata } from "next";
 
 import type { Dictionary } from "@/i18n";
@@ -26,11 +27,40 @@ import type { Locale } from "@/lib/types";
  */
 export const helpRobots: undefined = undefined;
 
-const ORGANIZATION = {
-  "@type": "Organization",
-  name: "Flovoo",
-  url: "https://flovoo.com",
-} as const;
+/**
+ * One organisation node, one id, referenced everywhere.
+ *
+ * The `@id` is what lets a consumer merge the author of an article, the
+ * publisher of the site and the subject of the about page into a single
+ * entity instead of three lookalikes. Emitted in full once per page; every
+ * other mention is a reference to this id.
+ */
+export const ORGANIZATION_ID = `${BRAND.url}/#organization`;
+
+const ORGANIZATION_REF = { "@id": ORGANIZATION_ID } as const;
+
+export function organizationJsonLd(locale: Locale) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": ORGANIZATION_ID,
+    name: BRAND.name,
+    alternateName: BRAND.nameAr,
+    legalName: BRAND.legalName,
+    url: BRAND.url,
+    logo: { "@type": "ImageObject", url: BRAND.logo },
+    sameAs: [...BRAND.sameAs, BRAND.helpUrl, BRAND.roadmapUrl],
+    areaServed: BRAND.areaServed.map((code) => ({ "@type": "Country", identifier: code })),
+    inLanguage: locale,
+    description:
+      locale === "ar"
+        ? "منصة مراسلة تجارية عربية أولًا تجمع واتساب وفيسبوك ماسنجر وإنستغرام وتيك توك وودجت الموقع في صندوق وارد واحد للفريق."
+        : "An Arabic-first business messaging platform bringing WhatsApp, Facebook Messenger, Instagram, TikTok and a website widget into one shared team inbox.",
+  };
+}
+
+/** Kept for the nodes that only need to point at the organisation. */
+const ORGANIZATION = ORGANIZATION_REF;
 
 /** Resolves a possibly relative href against the deployment's own address. */
 export function absoluteUrl(href: string): string {
