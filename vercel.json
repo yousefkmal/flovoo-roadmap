@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/help/citation-run",
+      "schedule": "0 6 * * 1"
+    }
+  ]
+}

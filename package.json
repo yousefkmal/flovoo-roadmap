@@ -14,6 +14,7 @@
     "check:ai-access": "node --experimental-strip-types --no-warnings scripts/check-ai-access.ts",
     "roadmap:check": "node --experimental-strip-types --no-warnings scripts/roadmap-import-check.ts",
     "roadmap:import": "node --experimental-strip-types --no-warnings scripts/roadmap-import.ts",
+    "geo:seed-prompts": "node --experimental-strip-types --no-warnings scripts/seed-geo-prompts.ts",
     "intercom:export": "node --experimental-strip-types --no-warnings scripts/intercom-export.ts",
     "intercom:survey": "node --experimental-strip-types --no-warnings scripts/intercom-survey.ts",
     "intercom:images": "node --experimental-strip-types --no-warnings scripts/intercom-images.ts",

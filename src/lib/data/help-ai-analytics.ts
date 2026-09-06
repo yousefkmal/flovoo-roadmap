@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getServiceSupabase } from "@/lib/data/supabase-admin";
+import { providers } from "@/lib/help/citations";
 
 /**
  * What AI systems did with the help center.
@@ -41,6 +42,13 @@ export interface AiVisibilitySnapshot {
   neverRetrieved: { title: string; language: string; updatedAt: string }[];
   assistantClicks: { target: string; clicks: number }[];
   indexNow: { submittedAt: string; ok: boolean; statusCode: number | null; urls: number }[];
+  /** Share of answers citing Flovoo, per provider per language. */
+  citationShare: { provider: string; language: string; runs: number; cited: number; share: number }[];
+  /** Who is cited instead of us. This is the content roadmap. */
+  competitors: { domain: string; mentions: number }[];
+  /** Every provider and whether it has a key, so "not configured" is visible. */
+  providerStatus: { id: string; label: string; configured: boolean }[];
+  promptCount: number;
   /** True when Supabase is not configured; the dashboard says so plainly. */
   unavailable: boolean;
 }
@@ -54,6 +62,10 @@ const EMPTY: AiVisibilitySnapshot = {
   neverRetrieved: [],
   assistantClicks: [],
   indexNow: [],
+  citationShare: [],
+  competitors: [],
+  providerStatus: [],
+  promptCount: 0,
   unavailable: true,
 };
 
@@ -63,7 +75,7 @@ export async function getAiVisibility(days = 30): Promise<AiVisibilitySnapshot> 
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-  const [operators, hits, views, clicks, pings, never] = await Promise.all([
+  const [operators, hits, views, clicks, pings, never, share, competitors, prompts] = await Promise.all([
     supabase.rpc("help_ai_overview", { days }),
     supabase
       .from("help_ai_crawler_hits")
@@ -79,6 +91,9 @@ export async function getAiVisibility(days = 30): Promise<AiVisibilitySnapshot> 
       .order("submitted_at", { ascending: false })
       .limit(10),
     supabase.rpc("help_never_retrieved", { days: 60 }),
+    supabase.rpc("help_geo_share", { days: 90 }),
+    supabase.rpc("help_geo_competitors", { days: 90, limit_to: 15 }),
+    supabase.from("help_geo_prompts").select("id", { count: "exact", head: true }).eq("is_active", true),
   ]);
 
   const hitRows = (hits.data ?? []) as {
@@ -135,6 +150,14 @@ export async function getAiVisibility(days = 30): Promise<AiVisibilitySnapshot> 
 
   return {
     unavailable: false,
+    citationShare: (share.data ?? []) as AiVisibilitySnapshot["citationShare"],
+    competitors: (competitors.data ?? []) as AiVisibilitySnapshot["competitors"],
+    providerStatus: providers().map((p) => ({
+      id: p.id,
+      label: p.label,
+      configured: p.isConfigured,
+    })),
+    promptCount: prompts.count ?? 0,
     operators: (operators.data ?? []) as AiOperatorRow[],
     timeline: [...timelineMap.entries()]
       .map(([key, count]) => {

@@ -10,7 +10,6 @@ import { isLocale } from "@/i18n/config";
 import { getHelpNavigation, getPublishedArticlesForExport } from "@/lib/data/help-repository";
 import { helpArticleHref, helpFooterLinks, helpHomeHref } from "@/lib/help/paths";
 import {
-  absoluteUrl,
   breadcrumbJsonLd,
   definedTermJsonLd,
   definedTerms,

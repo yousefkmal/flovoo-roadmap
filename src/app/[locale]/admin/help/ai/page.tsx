@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getDictionary } from "@/i18n";
@@ -231,6 +232,91 @@ export default async function AiVisibilityPage({ params }: PageProps<"/[locale]/
                   <li className="text-sm text-text-tertiary">{t.aiNoPings}</li>
                 ) : null}
               </ul>
+            </div>
+          </section>
+
+          <section className="mt-10 border-t border-border pt-8">
+            <h2 className="text-base font-bold text-text">{t.citTitle}</h2>
+            <p className="mt-1 max-w-2xl text-sm text-text-secondary">{t.citIntro}</p>
+
+            <p className="mt-2 text-sm">
+              <Link href={`/${locale}/admin/help/ai/prompts`} className="text-link hover:underline">
+                {t.promptsTitle}
+              </Link>
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {data.providerStatus.map((provider) => (
+                <span
+                  key={provider.id}
+                  className={`rounded-pill px-2.5 py-1 text-xs font-semibold ${
+                    provider.configured
+                      ? "bg-success-tint text-success-label"
+                      : "bg-subtle text-text-tertiary"
+                  }`}
+                >
+                  {provider.label} · {provider.configured ? t.citConfigured : t.citNotConfigured}
+                </span>
+              ))}
+              <span className="numeric rounded-pill bg-subtle px-2.5 py-1 text-xs font-semibold text-text-tertiary">
+                {t.citPrompts.replace("{count}", String(data.promptCount))}
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-6 lg:grid-cols-2">
+              <div>
+                <h3 className="text-sm font-bold text-text">{t.citShare}</h3>
+                <div className="mt-2 overflow-x-auto rounded-card border border-border">
+                  <table className="w-full border-collapse bg-card">
+                    <thead className="bg-subtle">
+                      <tr>
+                        <th className={th}>{t.citProvider}</th>
+                        <th className={th}>{t.citLanguage}</th>
+                        <th className={th}>{t.citRuns}</th>
+                        <th className={th}>{t.citCited}</th>
+                        <th className={th}>{t.citSharePct}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {data.citationShare.map((row) => (
+                        <tr key={`${row.provider}-${row.language}`}>
+                          <td className={`${td} font-semibold`}>{row.provider}</td>
+                          <td className={td}>{row.language}</td>
+                          <td className={`${td} numeral`}>{row.runs}</td>
+                          <td className={`${td} numeral`}>{row.cited}</td>
+                          <td className={`${td} numeral font-bold`}>{row.share}%</td>
+                        </tr>
+                      ))}
+                      {data.citationShare.length === 0 ? (
+                        <tr>
+                          <td className={`${td} text-text-tertiary`} colSpan={5}>
+                            {t.citNoRuns}
+                          </td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-text">{t.citCompetitors}</h3>
+                <p className="mt-1 text-xs text-text-tertiary">{t.citCompetitorsHint}</p>
+                <ul className="mt-2 flex flex-col gap-1.5">
+                  {data.competitors.map((row) => (
+                    <li
+                      key={row.domain}
+                      className="flex items-center justify-between rounded-control border border-border bg-card px-3 py-2 text-sm"
+                    >
+                      <span className="text-text">{row.domain}</span>
+                      <span className="numeral font-semibold text-text-secondary">{row.mentions}</span>
+                    </li>
+                  ))}
+                  {data.competitors.length === 0 ? (
+                    <li className="text-sm text-text-tertiary">{t.citNoRuns}</li>
+                  ) : null}
+                </ul>
+              </div>
             </div>
           </section>
         </>
