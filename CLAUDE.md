@@ -370,6 +370,73 @@ The help center is written to be read by assistants, not only by people.
 - The sitemap takes ~40s in dev and 0.6s in production, where it is
   prerendered. Give the check a generous timeout rather than chasing it.
 
+## Phase 7B–7E — extraction, tracking, citations
+
+**7B: written so a machine can lift the answer out.**
+
+- Four fields on `help_article_translations` (`0017`): `answer_summary` (the
+  answer in one or two sentences, shown as the lede and used as the meta
+  description), `question_title` (the same article phrased as the question a
+  reader would type), `key_facts` (jsonb list of label/value pairs, rendered as
+  a table and as `DefinedTerm` where it fits), `review_due_at`.
+- **The summary is prose, not a slogan.** `summaryBlocksPublish()` refuses a
+  summary that opens with a pronoun or a bare reference — an extracted
+  paragraph has no preceding sentence to resolve it against.
+- `/[locale]/help/glossary` and `/[locale]/help/about` exist because an
+  assistant answering "what is Flovoo" needs one page that says so plainly.
+  The glossary emits `DefinedTerm`; `about` emits `Organization` with a stable
+  `@id` so the entity is the same object across pages.
+- `src/config/brand.ts` holds the product's names in both languages.
+  `BRAND_VARIANTS` are the misspellings worth matching in a citation check;
+  `brand.test.ts` pins them with word boundaries, because "Flovo" is a
+  substring of "Flovoo" and a naive `includes` calls every mention a
+  misspelling.
+- **`CopyPageMenu`** copies the article as Markdown, or opens it in ChatGPT /
+  Claude / Perplexity with a prompt already written. The targets come from
+  `ASSISTANT_TARGETS` in `ai-crawlers.ts`; clicks go to `help_assistant_clicks`.
+
+**7C: who is actually reading it.**
+
+- `noteCrawler()` in `proxy.ts` fires and forgets a POST to
+  `/api/help/crawler-hit`; the proxy runs on the edge and cannot reach the
+  database. Never await it into the response.
+- **A user agent is a claim, not an identity.** `crawler-log.ts` does
+  forward-confirmed reverse DNS — PTR, then A/AAAA back — and stores the
+  verdict per hit. An unverified `GPTBot` string is recorded as unverified,
+  not as GPTBot. IPs are hashed, never stored.
+- `classifyUserAgent` matches the **longest** token, so `Claude-SearchBot` is
+  not swallowed by `ClaudeBot`. A test pins that.
+- Human arrivals from an assistant are labelled by referrer
+  (`aiSourceFromReferrer` → `help_article_views.ai_source`). ChatGPT strips the
+  referrer on some paths, so this undercounts and the dashboard says so.
+- `help_ai_crawler_daily` is a rollup whose `article_id` may be null (a hit on
+  `/llms.txt` belongs to no article). `0019` rebuilt it with a unique
+  **expression** index over `coalesce(article_id, '000…')`, because a generated
+  column in a primary key cannot be null — `0018` silently rejected every
+  non-article hit until that was found.
+
+**7E: does the answer cite us.**
+
+- `help_geo_prompts` holds 30 real questions per language; the weekly cron
+  (`vercel.json` → `/api/help/citation-run`, Mondays 06:00 UTC) asks each
+  configured provider and stores the answer text with the verdict. **The route
+  accepts GET** — that is what Vercel Cron sends — and authorises against
+  `CITATION_RUN_SECRET` or Vercel's `CRON_SECRET`. With neither set it answers
+  503 "not configured", which is the current live state.
+- Anthropic is the only provider wired (`ANTHROPIC_API_KEY`). `providers()`
+  returns an empty list when nothing is configured and the run is a no-op.
+- **A run is a sample, not a measurement.** Models are non-deterministic, have
+  their own retrieval, and personalise. One citation is not a ranking, and the
+  dashboard prints that caveat rather than implying a metric.
+  `help_geo_manual_checks` is there because the user checking by hand is still
+  the best signal available.
+- `geoScore` (`lib/help/geo.ts`) and the editor's GEO panel score an article
+  against `docs/geo-playbook.md`. **Advice, never a gate** — publishing is
+  blocked by missing alt text, not by a low score.
+- The AI dashboard is `/[locale]/admin/help/ai` (+ `/prompts`). Both are in
+  `scripts/check-admin-guard.ts`; both were verified with a marker row that a
+  cookieless request must not return.
+
 ## Permanent checks
 
 Run these before calling any phase done, and again before a deploy.
@@ -562,8 +629,8 @@ ran in `public.app_migrations`, and recognises migrations applied before the
 table existed by a marker object each one creates. **The production project is
 the live roadmap** — it holds real features, votes and submissions — so
 `seed.sql` (roadmap dev data, deletes first) is never applied there; only
-`seed-help.sql` is. **Migrations already applied there are frozen**: 0001–0006
-as of 2026-09-05. Add a new numbered file for any schema change.
+`seed-help.sql` is. **Migrations already applied there are frozen**: 0001–0020
+as of 2026-09-06. Add a new numbered file for any schema change.
 
 The direct database host is IPv6-only and macOS `getaddrinfo` does not return
 it to Node, so `SUPABASE_DB_URL` uses the **Session pooler** host
