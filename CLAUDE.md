@@ -336,6 +336,40 @@ exactly (182 of 231) — so it can be trusted without hitting the network.
 The other 49 point at articles the user deliberately left unpublished
 because they were empty in Intercom too.
 
+## Phase 7A — AI visibility: access & discoverability
+
+The help center is written to be read by assistants, not only by people.
+
+- **`src/config/ai-crawlers.ts` is the single list.** robots.txt, the access
+  check, the referral labels and the "ask an assistant" targets all read from
+  it. Adding a bot there adds it everywhere. (The brief writes it as a
+  root-level `config/`; it sits in `src/` so the `@/` alias resolves it.)
+- **robots.txt names every bot explicitly** instead of relying on `*`. Some AI
+  crawlers only obey a block naming them, and an explicit file is also a
+  statement of intent. Training crawlers are allowed by decision. `npm test`
+  fails if a search-class bot is ever disallowed.
+- **The launch `noindex` gate is gone.** `NEXT_PUBLIC_HELP_INDEXABLE` no longer
+  exists; `helpRobots` is permanently `undefined` and a test pins it. Closing
+  indexing again is now a deliberate code change, which is the point.
+- **`<article-url>.md` serves clean Markdown**, and `Accept: text/markdown`
+  reaches the same handler. The public address keeps the `.md` suffix because
+  `proxy.ts` rewrites it to `/api/help/markdown/…`; the route matcher had to
+  stop treating `.md` as a static asset for that to work.
+- **`/llms.txt` and `/llms-full.txt`** are generated on publish. Build them
+  from `getPublishedArticlesForExport()`, never article by article:
+  `getHelpArticleBySlug` resolves siblings per call, so the corpus took long
+  enough to time out. One pass, two seconds.
+- **IndexNow pings on publish and unpublish** (`src/lib/help/indexnow.ts`),
+  logged in `help_indexnow_pings`. Optional: no `INDEXNOW_KEY`, no pings, no
+  failure. Never awaited into a save — a search engine being down must not
+  cost somebody their edit.
+- **`npm run check:ai-access`** fetches a real article as each bot and insists
+  on 200 *with the article's text*: a bot-protection challenge also returns
+  200, so status alone proves nothing. Run it against the live host after any
+  deploy that touches robots or routing.
+- The sitemap takes ~40s in dev and 0.6s in production, where it is
+  prerendered. Give the check a generous timeout rather than chasing it.
+
 ## Permanent checks
 
 Run these before calling any phase done, and again before a deploy.
@@ -357,6 +391,10 @@ Run these before calling any phase done, and again before a deploy.
 - **Every publish path enforces alt text.** There is more than one way to
   publish an article (the editor, and the list's bulk action). Each has to run
   `figureWithoutAlt()`; a new one that skips it silently reopens the hole.
+- **Every AI system we allow can still read an article.** `npm run check:ai-access`
+  against the live host after any change to robots.txt, the proxy, routing or a
+  CDN rule. A "200" is not enough — the check looks for the article's own text,
+  because a challenge page is also a 200.
 - `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`; the build
   must still list the help pages as prerendered (`●`).
 

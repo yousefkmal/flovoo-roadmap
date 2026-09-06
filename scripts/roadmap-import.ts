@@ -101,7 +101,6 @@ async function main() {
     });
 
   const batchA = items.filter((i) => i.batch === "A").sort((a, b) => a.order - b.order);
-  const batchB = items.filter((i) => i.batch === "B").sort((a, b) => a.order - b.order);
   const duplicates = items.filter((i) => DUPLICATES[i.slug]);
   const fresh = items.filter((i) => !DUPLICATES[i.slug]);
 

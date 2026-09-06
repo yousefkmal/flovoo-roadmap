@@ -198,6 +198,53 @@ export async function getHelpArticleSlugs(locale: Locale): Promise<string[]> {
   return (await summariesFor(locale)).map((s) => s.slug);
 }
 
+/**
+ * Every published article in one language, with its body — one pass over the
+ * snapshot, no per-article work.
+ *
+ * `getHelpArticleBySlug` resolves siblings and the other language for each
+ * call, which is right for a page and quadratic for an export: building
+ * `llms-full.txt` article by article took long enough to time out. This is
+ * what the export and the Markdown corpus read.
+ */
+export async function getPublishedArticlesForExport(
+  locale: Locale,
+): Promise<
+  {
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    body: HelpArticleTranslation["body"];
+    updatedAt: string;
+    collectionName: string;
+    collectionSlug: string;
+  }[]
+> {
+  const { collections, articles, translations } = await loadPublished();
+  const articleById = new Map(articles.map((a) => [a.id, a]));
+  const collectionById = new Map(collections.map((c) => [c.id, c]));
+
+  return translations
+    .filter((t) => t.language === locale)
+    .flatMap((translation) => {
+      const article = articleById.get(translation.article_id);
+      const collection = article && collectionById.get(article.collection_id);
+      if (!article || !collection) return [];
+      return [
+        {
+          slug: translation.slug,
+          title: translation.title,
+          excerpt: translation.excerpt,
+          body: translation.body,
+          updatedAt: article.updated_at,
+          collectionName: locale === "ar" ? collection.name_ar : collection.name_en,
+          collectionSlug: collection.slug,
+        },
+      ];
+    })
+    .sort((a, b) => a.collectionSlug.localeCompare(b.collectionSlug) || a.title.localeCompare(b.title));
+}
+
 export async function getHelpArticleBySlug(
   locale: Locale,
   slug: string,

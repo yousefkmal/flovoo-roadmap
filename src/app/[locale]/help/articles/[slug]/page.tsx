@@ -1,3 +1,4 @@
+import { CopyPageMenu } from "@/components/help/CopyPageMenu";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { CalendarDays, Clock } from "lucide-react";
@@ -26,6 +27,7 @@ import { readingTimeLabel } from "@/lib/help/format";
 import { mediaPublicUrl } from "@/lib/help/media";
 import { followHelpRedirect, noteHelpNotFound } from "@/lib/help/redirects";
 import {
+  absoluteUrl,
   breadcrumbJsonLd,
   faqPageJsonLd,
   faqPairs,
@@ -218,7 +220,16 @@ export default async function HelpArticlePage({
               />
 
               <header className="mt-5">
-                <h1 className="text-2xl font-bold leading-tight text-text">{article.title}</h1>
+                <div className="flex items-start justify-between gap-3">
+                  <h1 className="text-2xl font-bold leading-tight text-text">{article.title}</h1>
+                  <CopyPageMenu
+                    articleId={article.id}
+                    locale={locale}
+                    markdownUrl={`${helpArticleHref(locale, article.slug)}.md`}
+                    canonicalUrl={absoluteUrl(helpArticleHref(locale, article.slug))}
+                    dict={dict}
+                  />
+                </div>
                 {article.excerpt ? (
                   <p className="mt-2 text-base leading-6 text-text-secondary">{article.excerpt}</p>
                 ) : null}

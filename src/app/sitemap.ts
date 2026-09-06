@@ -7,7 +7,7 @@ import {
   getHelpArticleBySlug,
 } from "@/lib/data/help-repository";
 import { helpArticleHref, helpCollectionHref, helpHomeHref } from "@/lib/help/paths";
-import { absoluteUrl, isHelpIndexable } from "@/lib/help/seo";
+import { absoluteUrl } from "@/lib/help/seo";
 import { isLocale } from "@/i18n/config";
 
 /**
@@ -25,15 +25,6 @@ export async function generateSitemaps() {
 export default async function sitemap({ id }: { id: string }): Promise<MetadataRoute.Sitemap> {
   const locale = isLocale(id) ? id : "ar";
   const other = locale === "ar" ? "en" : "ar";
-
-  // While indexing is closed the sitemap lists the roadmap only: offering
-  // URLs a crawler is told not to index is a contradiction.
-  if (!isHelpIndexable) {
-    return [
-      { url: absoluteUrl(`/${locale}`), changeFrequency: "daily", priority: 0.8 },
-      { url: absoluteUrl(`/${locale}/updates`), changeFrequency: "weekly", priority: 0.6 },
-    ];
-  }
 
   const [collections, slugs] = await Promise.all([
     getHelpCollections(),

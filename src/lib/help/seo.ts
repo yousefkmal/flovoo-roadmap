@@ -15,20 +15,16 @@ import type { Locale } from "@/lib/types";
  */
 
 /**
- * Whether search engines may index the help center.
+ * The help center is indexed.
  *
- * Default **off**. The help center rides on the roadmap's domain until
- * `help.flovoo.com` is pointed at this app, and the content is still filling
- * in; an index full of `news.flovoo.com/ar/help/...` costs more to undo than
- * to prevent. Set `NEXT_PUBLIC_HELP_INDEXABLE=true` only when the host is
- * live and the content is ready (recorded in CLAUDE.md).
+ * There used to be a launch gate here (`NEXT_PUBLIC_HELP_INDEXABLE`) that put
+ * `noindex` on every page while the content rode on the roadmap's domain. That
+ * is done: `help.flovoo.com` is live and the articles are published, so the
+ * gate is removed rather than left as a switch nobody remembers. Phase 7 is
+ * about being found; a stray `noindex` would silently undo all of it, so
+ * `npm test` fails if this ever returns anything but `undefined`.
  */
-export const isHelpIndexable = process.env.NEXT_PUBLIC_HELP_INDEXABLE === "true";
-
-/** The `robots` metadata every help page carries while indexing is closed. */
-export const helpRobots = isHelpIndexable
-  ? undefined
-  : ({ index: false, follow: false } as const);
+export const helpRobots: undefined = undefined;
 
 const ORGANIZATION = {
   "@type": "Organization",

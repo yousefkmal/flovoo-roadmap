@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE, isLocale } from "@/i18n/config";
+import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE, isLocale, type Locale } from "@/i18n/config";
 import { HELP_SEGMENT, helpHost } from "@/lib/help/paths";
 
 /**
@@ -46,6 +46,28 @@ function isHelpHost(request: NextRequest) {
 /** Routes that keep their own paths on the help host: sign-in and the admin. */
 const HELP_HOST_PASSTHROUGH = ["auth", "admin", HELP_SEGMENT];
 
+/**
+ * `<article-url>.md`, and `Accept: text/markdown` on the article itself, both
+ * mean "give me the plain text". Both are answered by one route handler.
+ *
+ * Matching here rather than adding a route keeps the public address exactly
+ * the article's own with `.md` appended, which is the shape agents expect.
+ */
+function markdownRewrite(request: NextRequest, locale: Locale, publicPath: string): URL | null {
+  const article = publicPath.match(/^\/articles\/([^/?#]+?)(\.md)?$/);
+  if (!article) return null;
+
+  const explicit = Boolean(article[2]);
+  const accept = request.headers.get("accept") ?? "";
+  // Only when Markdown is asked for ahead of HTML; a browser sends both.
+  const negotiated = /text\/markdown/i.test(accept) && !/text\/html/i.test(accept);
+  if (!explicit && !negotiated) return null;
+
+  const url = request.nextUrl.clone();
+  url.pathname = `/api/help/markdown/${locale}/${article[1]}`;
+  return url;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const locale = localeOf(pathname);
@@ -71,6 +93,9 @@ export function proxy(request: NextRequest) {
       return NextResponse.redirect(url, 308);
     }
 
+    const markdown = markdownRewrite(request, locale, rest);
+    if (markdown) return NextResponse.rewrite(markdown);
+
     if (!HELP_HOST_PASSTHROUGH.includes(first)) {
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/${HELP_SEGMENT}${rest}`;
@@ -78,10 +103,18 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // The same two addresses on the roadmap host, where help lives under /help.
+  const internal = pathname.slice(`/${locale}`.length);
+  if (internal.startsWith(`/${HELP_SEGMENT}/`)) {
+    const markdown = markdownRewrite(request, locale, internal.slice(`/${HELP_SEGMENT}`.length));
+    if (markdown) return NextResponse.rewrite(markdown);
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  // Everything except Next internals, the API surface, and static assets.
-  matcher: ["/((?!_next|api|.*\\.[\\w]+$).*)"],
+  // Everything except Next internals, the API surface, and static assets —
+  // but `.md` article addresses are ours, so they must not look like assets.
+  matcher: ["/((?!_next|api|.*\\.(?!md$)[\\w]+$).*)"],
 };

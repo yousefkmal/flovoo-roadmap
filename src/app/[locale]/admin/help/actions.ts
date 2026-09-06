@@ -1,5 +1,6 @@
 "use server";
 
+import { articleUrls, pingIndexNow } from "@/lib/help/indexnow";
 import { revalidatePath } from "next/cache";
 
 import { HELP_ICONS } from "@/components/help/CollectionIcon";
@@ -55,6 +56,19 @@ function revalidateHelp(locale: Locale) {
   revalidatePath(`/${locale}/admin/help`, "layout");
   revalidatePath("/sitemap/ar.xml");
   revalidatePath("/sitemap/en.xml");
+  // The machine-readable corpus is generated, so it goes stale with the pages.
+  revalidatePath("/llms.txt");
+  revalidatePath("/llms-full.txt");
+}
+
+/**
+ * Tells Bing what changed. Never awaited into the caller's failure path: a
+ * search engine being slow or down must not fail somebody's save.
+ */
+function announce(urls: string[]) {
+  void pingIndexNow(urls).catch((error) => {
+    console.warn("[flovoo] indexnow ping failed", error);
+  });
 }
 
 export type HelpFieldError =
@@ -243,6 +257,18 @@ export async function saveHelpArticleAction(
     const saved = await saveHelpArticle(id, input);
     await refreshChunks(saved.id);
     revalidateHelp(locale);
+    // Only a published article is worth telling a search engine about.
+    if (payload.status === "published") {
+      const collection = collections.find((c) => c.id === payload.collection_id);
+      announce(
+        articleUrls(
+          [ar && { language: "ar" as const, slug: ar.slug }, en && { language: "en" as const, slug: en.slug }].filter(
+            (t): t is { language: "ar" | "en"; slug: string } => Boolean(t),
+          ),
+          collection?.slug ?? null,
+        ),
+      );
+    }
     return { status: "ok", id: saved.id };
   } catch (error) {
     if (error instanceof SlugTaken && error.language !== "collection") {
@@ -310,6 +336,26 @@ export async function setHelpArticlesStatusAction(
     await setHelpArticlesStatus(valid, status);
     for (const id of valid) await refreshChunks(id);
     revalidateHelp(locale);
+    // Unpublishing matters too: Bing should stop offering a page that is gone.
+    const topics = await getAdminHelpCollections();
+    const changed: string[] = [];
+    for (const id of valid) {
+      const loaded = await getAdminHelpArticle(id);
+      if (!loaded) continue;
+      const collection = topics.find((c) => c.id === loaded.article.collection_id);
+      changed.push(
+        ...articleUrls(
+          (["ar", "en"] as const)
+            .map((language) => {
+              const translation = loaded.translations[language];
+              return translation ? { language, slug: translation.slug } : null;
+            })
+            .filter((t): t is { language: "ar" | "en"; slug: string } => Boolean(t)),
+          collection?.slug ?? null,
+        ),
+      );
+    }
+    if (changed.length) announce(changed);
     return { status: "ok", count: valid.length };
   } catch (error) {
     console.error("[flovoo] changing help article status failed", error);

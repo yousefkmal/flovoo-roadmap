@@ -11,6 +11,7 @@
     "seed:sql": "node --experimental-strip-types --no-warnings scripts/generate-seed-sql.ts",
     "check:admin-guard": "node --experimental-strip-types --no-warnings scripts/check-admin-guard.ts",
     "check:help-links": "node --experimental-strip-types --no-warnings scripts/check-help-links.ts",
+    "check:ai-access": "node --experimental-strip-types --no-warnings scripts/check-ai-access.ts",
     "roadmap:check": "node --experimental-strip-types --no-warnings scripts/roadmap-import-check.ts",
     "roadmap:import": "node --experimental-strip-types --no-warnings scripts/roadmap-import.ts",
     "intercom:export": "node --experimental-strip-types --no-warnings scripts/intercom-export.ts",

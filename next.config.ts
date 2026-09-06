@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
    * Leaving it external lets Node load the binding the way the package expects.
    */
   serverExternalPackages: ["@resvg/resvg-js"],
+
+  /**
+   * IndexNow proves ownership by fetching `/<key>.txt` and expecting the key
+   * back. Rewriting keeps the key an environment variable instead of a file
+   * committed to the repository, and lets it be rotated without a deploy.
+   */
+  async rewrites() {
+    const key = process.env.INDEXNOW_KEY?.trim();
+    return key ? [{ source: `/${key}.txt`, destination: "/api/help/indexnow-key" }] : [];
+  },
 };
 
 export default nextConfig;
