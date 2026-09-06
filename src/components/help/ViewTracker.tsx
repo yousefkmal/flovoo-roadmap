@@ -45,6 +45,8 @@ export function ViewTracker({ articleId, locale }: { articleId: string; locale: 
       locale,
       session: sessionId(),
       referrer: document.referrer || null,
+      // Some assistants tag the link instead of sending a referrer.
+      utmSource: new URLSearchParams(window.location.search).get("utm_source"),
     });
 
     // A beacon survives the reader navigating away immediately.

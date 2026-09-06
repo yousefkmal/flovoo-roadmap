@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { NextResponse, type NextRequest } from "next/server";
 
+import { AI_REFERRERS, aiSourceFromReferrer } from "@/config/ai-crawlers";
 import { isLocale } from "@/i18n/config";
 import { localRecordView } from "@/lib/data/help-local-store";
 import { getServiceSupabase } from "@/lib/data/supabase-admin";
@@ -33,7 +34,13 @@ function referrerDomain(raw: unknown, self: string): string | null {
 }
 
 export async function POST(request: NextRequest) {
-  let body: { articleId?: unknown; locale?: unknown; session?: unknown; referrer?: unknown };
+  let body: {
+    articleId?: unknown;
+    locale?: unknown;
+    session?: unknown;
+    referrer?: unknown;
+    utmSource?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -53,11 +60,23 @@ export async function POST(request: NextRequest) {
   const sessionHash = createHash("sha256")
     .update(`view:${typeof session === "string" ? session : (ipHash ?? "anonymous")}`)
     .digest("hex");
+  // An assistant that sent this reader, when the browser said so. Null covers
+  // two different things — not from an assistant, and referrer stripped — which
+  // is exactly why the dashboard calls this a floor rather than a total.
+  const referrer = typeof body.referrer === "string" ? body.referrer : null;
+  const utmSource = typeof body.utmSource === "string" ? body.utmSource.toLowerCase() : null;
+  const aiSource =
+    aiSourceFromReferrer(referrer) ??
+    // Some platforms pass a tag instead of a referrer; honour it when the
+    // value is one we already know, never as free text.
+    (utmSource && AI_REFERRERS.some((r) => r.label === utmSource) ? utmSource : null);
+
   const row = {
     article_id: articleId,
     language: locale,
     session_hash: sessionHash,
     referrer_domain: referrerDomain(body.referrer, request.nextUrl.hostname),
+    ai_source: aiSource,
   };
 
   const supabase = getServiceSupabase() ?? getSupabase();

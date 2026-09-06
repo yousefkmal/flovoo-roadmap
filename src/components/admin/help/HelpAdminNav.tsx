@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FileText, FolderTree, Images, Route } from "lucide-react";
+import { BarChart3, Sparkles, FileText, FolderTree, Images, Route } from "lucide-react";
 
 import type { Locale } from "@/i18n/config";
 
@@ -12,16 +12,24 @@ export function HelpAdminNav({
   labels,
 }: {
   locale: Locale;
-  labels: { articles: string; collections: string; media: string; redirects: string; analytics: string };
+  labels: {
+    articles: string;
+    collections: string;
+    media: string;
+    redirects: string;
+    analytics: string;
+    aiVisibility: string;
+  };
 }) {
   const pathname = usePathname();
   const base = `/${locale}/admin/help`;
   const items = [
-    { href: base, label: labels.articles, Icon: FileText, exact: false, excludes: [`${base}/collections`, `${base}/media`, `${base}/redirects`, `${base}/analytics`] },
+    { href: base, label: labels.articles, Icon: FileText, exact: false, excludes: [`${base}/collections`, `${base}/media`, `${base}/redirects`, `${base}/analytics`, `${base}/ai`] },
     { href: `${base}/collections`, label: labels.collections, Icon: FolderTree, exact: false, excludes: [] },
     { href: `${base}/media`, label: labels.media, Icon: Images, exact: false, excludes: [] },
     { href: `${base}/redirects`, label: labels.redirects, Icon: Route, exact: false, excludes: [] },
     { href: `${base}/analytics`, label: labels.analytics, Icon: BarChart3, exact: false, excludes: [] },
+    { href: `${base}/ai`, label: labels.aiVisibility, Icon: Sparkles, exact: false, excludes: [] },
   ];
 
   return (

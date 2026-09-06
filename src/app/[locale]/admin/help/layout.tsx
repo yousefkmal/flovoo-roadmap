@@ -29,6 +29,7 @@ export default async function HelpAdminLayout({
               media: dict.adminHelp.navMedia,
               redirects: dict.adminHelp.navRedirects,
               analytics: dict.adminHelp.navAnalytics,
+              aiVisibility: dict.adminHelp.navAiVisibility,
             }}
           />
         </div>

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE, isLocale, type Locale } from "@/i18n/config";
+import { classifyUserAgent } from "@/config/ai-crawlers";
 import { HELP_SEGMENT, helpHost } from "@/lib/help/paths";
 
 /**
@@ -68,9 +69,44 @@ function markdownRewrite(request: NextRequest, locale: Locale, publicPath: strin
   return url;
 }
 
+/**
+ * Tells the log an AI system was here.
+ *
+ * Help pages are static, so nothing runs per request on the page itself and
+ * the proxy is the only place that sees every fetch. The work happens in a
+ * Node route because verifying a crawler needs reverse DNS; this only passes
+ * the claim along, and never blocks the response.
+ */
+function noteCrawler(request: NextRequest, pathname: string) {
+  const userAgent = request.headers.get("user-agent");
+  if (!userAgent || !classifyUserAgent(userAgent)) return;
+
+  const url = new URL("/api/help/crawler-hit", request.nextUrl.origin);
+  void fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(process.env.INTERNAL_LOG_SECRET
+        ? { "x-internal-log": process.env.INTERNAL_LOG_SECRET }
+        : {}),
+    },
+    body: JSON.stringify({
+      userAgent,
+      path: pathname,
+      ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+    }),
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const locale = localeOf(pathname);
+
+  // Only help content is worth logging; the roadmap is a different product.
+  if (/^\/(ar|en)(\/help)?\/(articles|categories)\//.test(pathname) || /^\/(ar|en)(\/help)?$/.test(pathname)) {
+    noteCrawler(request, pathname);
+  }
 
   if (!locale) {
     const resolved = resolveLocale(request);

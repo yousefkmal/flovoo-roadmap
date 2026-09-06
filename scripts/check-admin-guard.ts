@@ -22,6 +22,7 @@ const ADMIN_PATHS = [
   "/ar/admin/help/media",
   "/ar/admin/help/redirects",
   "/ar/admin/help/analytics",
+  "/ar/admin/help/ai",
 ];
 
 /** Serialised-prop names that only exist when private data was rendered. */
