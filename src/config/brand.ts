@@ -51,6 +51,6 @@ export const PRODUCT_NAMES = {
   templates: { en: "WhatsApp Templates", ar: "قوالب واتساب" },
   quickReplies: { en: "Quick Replies", ar: "الردود السريعة" },
   workflows: { en: "Workflows", ar: "سير العمل" },
-  aiAgents: { en: "AI Agents", ar: "الوكلاء الذكيون" },
+  aiAgents: { en: "AI Agents", ar: "وكلاء الذكاء الصناعي" },
   contactStages: { en: "Contact Stages", ar: "مراحل جهات الاتصال" },
 } as const;

@@ -195,6 +195,12 @@ export function HelpArticlesTable({
                         {dict.adminHelp.coverageAltUnreviewed}
                       </span>
                     ) : null}
+                    {row.summaryUnreviewed ? (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-warning-tint px-2 py-0.5 text-[11px] font-semibold text-warning-label">
+                        <TriangleAlert className="size-3 shrink-0" strokeWidth={2.5} aria-hidden />
+                        {dict.adminHelp.summaryUnreviewed}
+                      </span>
+                    ) : null}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-text-secondary">{collectionName}</td>
                   <td className="whitespace-nowrap px-3 py-2.5">

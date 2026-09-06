@@ -66,6 +66,8 @@ export interface HelpTranslationInput {
   meta_description: string | null;
   /** Phase 7B: the extraction fields. */
   answer_summary: string | null;
+  /** The editor says the writer has read the drafted summary and accepts it. */
+  summary_reviewed: boolean;
   question_title: string | null;
   key_facts: string[];
   review_due_at: string | null;
@@ -96,6 +98,12 @@ function translationRow(
     title: input.title,
     excerpt: input.excerpt,
     answer_summary: input.answer_summary,
+    // Two ways to review a drafted summary: rewrite it, or press approve. The
+    // text comparison is the one that cannot be forged by a stale client.
+    summary_needs_review:
+      (existing?.summary_needs_review ?? false) &&
+      !input.summary_reviewed &&
+      input.answer_summary === (existing?.answer_summary ?? null),
     question_title: input.question_title,
     key_facts: input.key_facts,
     // Six months from now unless the writer set a date themselves.

@@ -1151,6 +1151,7 @@ function translation(
     // Real articles fill these in through the editor; most seed rows leave
     // them empty, which is the common case a page must still render.
     answer_summary: t.answer_summary ?? null,
+    summary_needs_review: false,
     question_title: t.question_title ?? null,
     key_facts: t.key_facts ?? [],
     review_due_at: null,

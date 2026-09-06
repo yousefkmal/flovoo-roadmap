@@ -62,11 +62,12 @@ describe("brand naming", () => {
     assert.equal(new Set(arabicNames).size, arabicNames.length);
   });
 
-  it("uses the Arabic name the help center already uses for AI Agents", () => {
-    // The help center topic imported from Intercom says "الوكلاء الذكيون".
-    // The roadmap said something else until this was unified; the constant is
-    // what settles it.
-    assert.equal(PRODUCT_NAMES.aiAgents.ar, "الوكلاء الذكيون");
+  it("uses the official Arabic name for AI Agents", () => {
+    // Three spellings were in use: the help center topic imported from Intercom
+    // said "الوكلاء الذكيون", the roadmap import said "وكلاء الذكاء الاصطناعي".
+    // The user settled it on 2026-09-06; this constant is now what decides, and
+    // the help topic and the roadmap feature were renamed to match.
+    assert.equal(PRODUCT_NAMES.aiAgents.ar, "وكلاء الذكاء الصناعي");
   });
 
   it("has a resolvable brand identity for the Organization node", () => {

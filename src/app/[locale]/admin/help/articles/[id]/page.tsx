@@ -32,6 +32,7 @@ function toDraft(translation: HelpArticleTranslation | undefined): TranslationDr
     meta_title: translation.meta_title ?? "",
     meta_description: translation.meta_description ?? "",
     answer_summary: translation.answer_summary ?? "",
+    summary_needs_review: translation.summary_needs_review === true,
     question_title: translation.question_title ?? "",
     key_facts: Array.isArray(translation.key_facts) ? translation.key_facts : [],
   };

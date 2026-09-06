@@ -55,6 +55,7 @@ type TranslationHead = Pick<
   /** Generated column (migration 0014). Absent from the local store's rows. */
   has_draft_alt?: boolean;
   answer_summary?: string | null;
+  summary_needs_review?: boolean;
   review_due_at?: string | null;
 };
 
@@ -73,13 +74,14 @@ async function translationHeads(): Promise<TranslationHead[]> {
       ...t,
       has_draft_alt: bodyHasDraftAlt(t.body),
       answer_summary: t.answer_summary,
+      summary_needs_review: t.summary_needs_review,
       review_due_at: t.review_due_at,
     }));
   }
   const { data, error } = await supabase
     .from("help_article_translations")
     .select(
-      "id, article_id, language, slug, title, updated_at, has_draft_alt, answer_summary, review_due_at",
+      "id, article_id, language, slug, title, updated_at, has_draft_alt, answer_summary, summary_needs_review, review_due_at",
     );
   if (error) throw new Error(`Failed to load help translations: ${error.message}`);
   return data as TranslationHead[];
@@ -137,8 +139,17 @@ export async function getAdminHelpArticles(): Promise<HelpAdminArticleRow[]> {
           hasDraftAlt: Boolean(t.ar?.has_draft_alt || t.en?.has_draft_alt),
           // Cheap signals only: the full readiness score needs the body, which
           // a list of 70 articles has no business loading.
+          // An unreviewed draft counts as no summary, so one filter answers
+          // "which articles still need me?" whether the field is empty or
+          // holds text nobody has read.
           needsSummary: (["ar", "en"] as const).some(
-            (language) => t[language] && !String(t[language]?.answer_summary ?? "").trim(),
+            (language) =>
+              t[language] &&
+              (!String(t[language]?.answer_summary ?? "").trim() ||
+                t[language]?.summary_needs_review === true),
+          ),
+          summaryUnreviewed: (["ar", "en"] as const).some(
+            (language) => t[language]?.summary_needs_review === true,
           ),
           reviewDueAt: earliestReview,
           // Decided here rather than in the page: `Date.now()` during render is

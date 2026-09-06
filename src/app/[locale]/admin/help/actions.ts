@@ -83,6 +83,7 @@ export type HelpFieldError =
   | "invalidIcon"
   | "altMissing"
   | "summaryLength"
+  | "summaryUnreviewed"
   | "invalidPath"
   | "samePath";
 
@@ -136,6 +137,13 @@ export interface HelpTranslationPayload {
   meta_description: string;
   /** Phase 7B: the fields that decide whether a passage can be extracted. */
   answer_summary: string;
+  /**
+   * False while the drafted summary is still unreviewed. The editor sets it
+   * true when the writer edits the field or presses approve; the mutation
+   * cross-checks it against the stored text, so a stale client cannot clear
+   * the flag on its own.
+   */
+  summary_reviewed?: boolean;
   question_title: string;
   key_facts: string[];
 }
@@ -209,6 +217,10 @@ function validateTranslation(
   const answerSummary = text(t.answer_summary, 700);
   if (requireAlt && summaryBlocksPublish(answerSummary.value)) {
     errors[`${prefix}.answer_summary`] = answerSummary.value ? "summaryLength" : "required";
+  } else if (requireAlt && t.summary_reviewed === false) {
+    // A drafted summary nobody has read is not an answer. Same rule as a
+    // drafted image description: it counts as missing until somebody looks.
+    errors[`${prefix}.answer_summary`] = "summaryUnreviewed";
   }
   const questionTitle = text(t.question_title, 200);
   if (questionTitle.error) errors[`${prefix}.question_title`] = questionTitle.error;
@@ -223,6 +235,7 @@ function validateTranslation(
     title: title.value!,
     excerpt: excerpt.value,
     answer_summary: answerSummary.value,
+    summary_reviewed: t.summary_reviewed === true,
     question_title: questionTitle.value,
     key_facts: keyFacts,
     review_due_at: null,

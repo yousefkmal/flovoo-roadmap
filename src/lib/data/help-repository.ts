@@ -207,6 +207,16 @@ export async function getHelpArticleSlugs(locale: Locale): Promise<string[]> {
  * `llms-full.txt` article by article took long enough to time out. This is
  * what the export and the Markdown corpus read.
  */
+/**
+ * A machine-written summary is not an answer until somebody has read it, so
+ * everywhere a reader could see one — the page, the `.md` endpoint, the meta
+ * description — an unreviewed draft reads as absent. Same rule as draft alt
+ * text (0011); this is the one place it is applied.
+ */
+function reviewedSummary(translation: HelpArticleTranslation): string | null {
+  return translation.summary_needs_review ? null : translation.answer_summary;
+}
+
 export async function getPublishedArticlesForExport(
   locale: Locale,
 ): Promise<
@@ -237,7 +247,7 @@ export async function getPublishedArticlesForExport(
           slug: translation.slug,
           title: translation.title,
           excerpt: translation.excerpt,
-          answerSummary: translation.answer_summary,
+          answerSummary: reviewedSummary(translation),
           keyFacts: Array.isArray(translation.key_facts) ? translation.key_facts : [],
           body: translation.body,
           updatedAt: article.updated_at,
@@ -279,7 +289,7 @@ export async function getHelpArticleBySlug(
     metaTitle: translation.meta_title,
     metaDescription: translation.meta_description,
     ogImagePath: translation.og_image_path,
-    answerSummary: translation.answer_summary,
+    answerSummary: reviewedSummary(translation),
     questionTitle: translation.question_title,
     keyFacts: Array.isArray(translation.key_facts) ? translation.key_facts : [],
     alternate: counterpart ? { locale: other, slug: counterpart.slug } : null,

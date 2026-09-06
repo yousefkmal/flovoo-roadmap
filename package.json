@@ -29,7 +29,9 @@
     "news:cover-en": "node --experimental-strip-types --no-warnings scripts/news-cover-en.ts",
     "db:migrate": "node --experimental-strip-types --no-warnings scripts/apply-migrations.ts",
     "db:migrate:seed-help": "node --experimental-strip-types --no-warnings scripts/apply-migrations.ts --seed-help",
-    "test": "node --experimental-strip-types --no-warnings --test \"src/**/*.test.ts\""
+    "test": "node --experimental-strip-types --no-warnings --test \"src/**/*.test.ts\"",
+    "help:summary-worklist": "node --experimental-strip-types --no-warnings scripts/help-summary-worklist.ts",
+    "help:summary-apply": "node --experimental-strip-types --no-warnings scripts/help-summary-apply.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -61,6 +61,11 @@ export interface HelpArticleTranslation {
   og_image_path: string | null;
   /** The direct answer, 40-70 words. Required to publish (Phase 7B). */
   answer_summary: string | null;
+  /**
+   * True while `answer_summary` is a machine-written draft. A draft counts as
+   * no summary at all: readers never see it, and publishing still refuses it.
+   */
+  summary_needs_review: boolean;
   /** The title as a user would type the question. Optional. */
   question_title: string | null;
   /** 3-6 short facts: limits, prices, prerequisites. */
@@ -182,6 +187,8 @@ export interface HelpAdminArticleRow {
   hasDraftAlt: boolean;
   /** A translation exists with no answer summary — it cannot be published. */
   needsSummary: boolean;
+  /** True when a drafted summary is present but nobody has approved it. */
+  summaryUnreviewed: boolean;
   /** The earliest review date across its translations. */
   reviewDueAt: string | null;
   /** Whether that date has passed. Computed server-side, never during render. */

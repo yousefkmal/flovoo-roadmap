@@ -3,7 +3,7 @@
 import { GeoPanel } from "./GeoPanel";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ExternalLink, Monitor, Smartphone } from "lucide-react";
+import { Eye, EyeOff, ExternalLink, Monitor, Smartphone, TriangleAlert } from "lucide-react";
 import { useCallback, useRef, useState, useTransition } from "react";
 
 import {
@@ -104,8 +104,11 @@ export function HelpArticleEditor({
     // ProseMirror builds node attrs with `Object.create(null)`; React refuses to
     // serialise prototype-less objects into a Server Action. A JSON round trip
     // yields the plain document the action expects.
-    const plain = (t: TranslationDraft): TranslationDraft => ({
+    const plain = (t: TranslationDraft) => ({
       ...t,
+      // The action asks "is this summary approved?", which is the opposite of
+      // the flag the editor holds.
+      summary_reviewed: !t.summary_needs_review,
       body: JSON.parse(JSON.stringify(t.body)) as BlockDocument,
     });
     const payload: HelpArticlePayload = {
@@ -370,7 +373,32 @@ function TranslationFields({
           under the title rather than among the SEO fields at the bottom. */}
       <div className="sm:col-span-2">
         <Field id={id("answer-summary")} label={t.fieldAnswerSummary} hint={t.answerSummaryHint} error={err("answer_summary")}>
-          <textarea id={id("answer-summary")} dir={dir} lang={language} rows={3} value={draft.answer_summary} onChange={(e) => onChange({ answer_summary: e.target.value })} aria-invalid={Boolean(err("answer_summary"))} className={`${FIELD_CLASS} text-start`} />
+          {draft.summary_needs_review ? (
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning-tint px-2 py-0.5 text-[11px] font-bold text-warning-label">
+                <TriangleAlert className="size-3" strokeWidth={2.5} aria-hidden />
+                {t.summaryUnreviewed}
+              </span>
+              <button
+                type="button"
+                onClick={() => onChange({ summary_needs_review: false })}
+                className="text-xs font-semibold text-link hover:underline"
+              >
+                {t.summaryApprove}
+              </button>
+            </div>
+          ) : null}
+          <textarea
+            id={id("answer-summary")}
+            dir={dir}
+            lang={language}
+            rows={3}
+            value={draft.answer_summary}
+            /* Editing is the review — the same rule a drafted alt text follows. */
+            onChange={(e) => onChange({ answer_summary: e.target.value, summary_needs_review: false })}
+            aria-invalid={Boolean(err("answer_summary"))}
+            className={`${FIELD_CLASS} text-start ${draft.summary_needs_review ? "border-warning-label" : ""}`}
+          />
         </Field>
       </div>
       <div className="sm:col-span-2">

@@ -19,6 +19,8 @@ export interface TranslationDraft {
   meta_description: string;
   /** Phase 7B: what makes a passage liftable. */
   answer_summary: string;
+  /** True while the summary is a machine-written draft nobody has approved. */
+  summary_needs_review: boolean;
   question_title: string;
   key_facts: string[];
 }
@@ -49,6 +51,7 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
   meta_title: "",
   meta_description: "",
   answer_summary: "",
+  summary_needs_review: false,
   question_title: "",
   key_facts: [],
 };
