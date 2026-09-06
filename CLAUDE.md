@@ -382,6 +382,18 @@ The help center is written to be read by assistants, not only by people.
 - **The summary is prose, not a slogan.** `summaryBlocksPublish()` refuses a
   summary that opens with a pronoun or a bare reference — an extracted
   paragraph has no preceding sentence to resolve it against.
+- **A drafted summary is invisible until somebody approves it** (`0021`).
+  All 38 published articles predate 7B, so 74 summaries were drafted in bulk
+  (`help:summary-worklist` → write → `help:summary-apply`) with
+  `summary_needs_review = true`. That flag means *absent*: `reviewedSummary()`
+  in `help-repository.ts` nulls it for the page, the `.md` endpoint, the meta
+  description and `llms.txt`, and publishing still errors with
+  `summaryUnreviewed`. Editing the field clears it, and so does the editor's
+  approve button.
+  **Deploy that guard before writing drafts to production, not after.** Doing
+  it the other way round put the drafts on live pages for a few minutes: the
+  deployed code read `answer_summary` directly and the ISR window expired
+  while the new build was still going out.
 - `/[locale]/help/glossary` and `/[locale]/help/about` exist because an
   assistant answering "what is Flovoo" needs one page that says so plainly.
   The glossary emits `DefinedTerm`; `about` emits `Organization` with a stable
@@ -458,6 +470,10 @@ Run these before calling any phase done, and again before a deploy.
 - **Every publish path enforces alt text.** There is more than one way to
   publish an article (the editor, and the list's bulk action). Each has to run
   `figureWithoutAlt()`; a new one that skips it silently reopens the hole.
+- **Bulk content work lands as marked drafts, never as live content.** Alt
+  text (0011) and answer summaries (0021) both follow it: write the draft,
+  mark it, treat the mark as absence everywhere a reader looks. Ship the code
+  that honours the mark *first*.
 - **Every AI system we allow can still read an article.** `npm run check:ai-access`
   against the live host after any change to robots.txt, the proxy, routing or a
   CDN rule. A "200" is not enough — the check looks for the article's own text,
