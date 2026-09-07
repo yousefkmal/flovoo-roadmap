@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
 import { getAiVisibility } from "@/lib/data/help-ai-analytics";
+import { getSearchConsoleReport } from "@/lib/help/search-console";
 import { formatDate } from "@/lib/format";
 import { requireAdminPage } from "@/lib/auth/admin";
 
@@ -18,6 +19,7 @@ export default async function AiVisibilityPage({ params }: PageProps<"/[locale]/
   const dict = getDictionary(locale);
   const t = dict.adminHelp;
   const data = await getAiVisibility(30);
+  const search = await getSearchConsoleReport(28);
 
   const searchOperators = data.operators.filter((o) => o.purpose !== "training");
   const totalHits = data.operators.reduce((sum, o) => sum + o.hits, 0);
@@ -159,6 +161,45 @@ export default async function AiVisibilityPage({ params }: PageProps<"/[locale]/
                 ) : null}
               </ul>
             </div>
+          </section>
+
+          {/* The one source here that is not our own measurement: what Google
+              says real people searched and clicked. */}
+          <section className="mt-8">
+            <h2 className="text-base font-bold text-text">{t.gscTitle}</h2>
+            {!search.configured ? (
+              <p className="mt-2 rounded-card border border-border bg-subtle p-4 text-sm text-text-secondary">
+                {t.gscNotConfigured}
+              </p>
+            ) : search.error ? (
+              <p className="mt-2 rounded-card border border-border bg-subtle p-4 text-sm text-text-secondary">
+                {t.gscError}
+              </p>
+            ) : (
+              <>
+                <p className="mt-1.5 text-sm text-text-secondary">
+                  {t.gscWindow}{" "}
+                  <span className="numeral">{search.totals?.clicks ?? 0}</span>{" "}
+                  {t.gscClicks} ·{" "}
+                  <span className="numeral">{search.totals?.impressions ?? 0}</span>{" "}
+                  {t.gscImpressions}
+                </p>
+                <div className="mt-2 grid gap-6 lg:grid-cols-2">
+                  <GscTable
+                    caption={t.gscTopQueries}
+                    head={t.gscQuery}
+                    rows={search.topQueries ?? []}
+                    labels={t}
+                  />
+                  <GscTable
+                    caption={t.gscTopPages}
+                    head={t.gscPage}
+                    rows={search.topPages ?? []}
+                    labels={t}
+                  />
+                </div>
+              </>
+            )}
           </section>
 
           <section className="mt-8">
@@ -322,5 +363,56 @@ export default async function AiVisibilityPage({ params }: PageProps<"/[locale]/
         </>
       )}
     </main>
+  );
+}
+
+function GscTable({
+  caption,
+  head,
+  rows,
+  labels,
+}: {
+  caption: string;
+  head: string;
+  rows: { key: string; clicks: number; impressions: number; position: number }[];
+  labels: { gscClicks: string; gscImpressions: string; gscPosition: string; gscEmpty: string };
+}) {
+  const th = "px-3 py-2 text-start text-xs font-bold text-text-secondary";
+  const td = "px-3 py-2 text-sm text-text";
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-text-secondary">{caption}</h3>
+      <div className="mt-2 overflow-x-auto rounded-card border border-border">
+        <table className="w-full border-collapse bg-card">
+          <thead className="bg-subtle">
+            <tr>
+              <th className={th}>{head}</th>
+              <th className={th}>{labels.gscClicks}</th>
+              <th className={th}>{labels.gscImpressions}</th>
+              <th className={th}>{labels.gscPosition}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.slice(0, 10).map((row) => (
+              <tr key={row.key}>
+                <td className={`${td} max-w-xs truncate`} dir="auto">
+                  {row.key}
+                </td>
+                <td className={`${td} numeral`}>{row.clicks}</td>
+                <td className={`${td} numeral`}>{row.impressions}</td>
+                <td className={`${td} numeral`}>{row.position.toFixed(1)}</td>
+              </tr>
+            ))}
+            {rows.length === 0 ? (
+              <tr>
+                <td className={`${td} text-text-tertiary`} colSpan={4}>
+                  {labels.gscEmpty}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
