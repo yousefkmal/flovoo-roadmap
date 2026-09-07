@@ -17,11 +17,12 @@ export const BRAND = {
   url: "https://flovoo.com",
   helpUrl: "https://help.flovoo.com",
   roadmapUrl: "https://news.flovoo.com",
-  logo: "https://flovoo.com/logo.png",
+  // The PNG this used to point at 404s; this SVG is what the site serves.
+  logo: "https://flovoo.com/assets/flovoo-logo.svg",
   /** Profiles that confirm this is the same organisation, for `sameAs`. */
   sameAs: [
     "https://www.linkedin.com/company/flovoo",
-    "https://x.com/flovooapp",
+    "https://x.com/flovoo",
   ],
   /** Where the customers are. Assistants answer regionally. */
   areaServed: ["EG", "SA", "AE", "KW", "QA", "BH", "OM", "JO", "MA", "DZ", "TN"],
