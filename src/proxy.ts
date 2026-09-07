@@ -108,6 +108,11 @@ export function proxy(request: NextRequest) {
     noteCrawler(request, pathname);
   }
 
+  // The Markdown corpus files address themselves. The matcher lets `.md`
+  // through so `/ar/articles/x.md` can be rewritten, and without this guard
+  // `/llms-full.ar.md` would be redirected to `/ar/llms-full.ar.md` and 404.
+  if (pathname.startsWith("/llms-full.")) return NextResponse.next();
+
   if (!locale) {
     const resolved = resolveLocale(request);
     const url = request.nextUrl.clone();

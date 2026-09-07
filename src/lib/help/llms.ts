@@ -102,9 +102,82 @@ export async function buildLlmsFullTxt(): Promise<string> {
   return out.join("\n");
 }
 
+/**
+ * The help center in one language, as Markdown.
+ *
+ * Served as `/llms-full.ar.md` and `/llms-full.en.md` for the same reason the
+ * website serves its own: the AI Agent we are training takes file uploads, not
+ * links, and an Arabic-first assistant should not have every answer competing
+ * with its own English translation inside one document.
+ *
+ * Same source as `/llms-full.txt`, so the review gate on machine-written
+ * summaries applies here without restating it.
+ */
+export async function buildLlmsFullMd(locale: Locale): Promise<string> {
+  const out: string[] = [];
+  header(out);
+  out.push(
+    locale === "ar"
+      ? "كل مقالات مركز المساعدة المنشورة بالعربية، بنصّها الكامل."
+      : "Every published help center article in English, in full.",
+  );
+  out.push("");
+
+  const [collections, navigation] = await Promise.all([
+    getHelpCollectionsWithCounts(locale),
+    getHelpNavigation(locale),
+  ]);
+  const articlesByCollection = new Map(navigation.map((c) => [c.id, c.articles]));
+
+  // A topic index first: a reader that only needs one article can find it
+  // without reading the whole file.
+  out.push(locale === "ar" ? "## المواضيع" : "## Topics");
+  out.push("");
+  for (const collection of collections) {
+    const articles = articlesByCollection.get(collection.id) ?? [];
+    if (!articles.length) continue;
+    const name = locale === "ar" ? collection.name_ar : collection.name_en;
+    out.push(`### ${name}`);
+    const description = locale === "ar" ? collection.description_ar : collection.description_en;
+    if (description) out.push(description);
+    out.push("");
+    for (const article of articles) {
+      out.push(`- [${article.title}](${absoluteUrl(helpArticleHref(locale, article.slug))})`);
+    }
+    out.push("");
+  }
+
+  out.push(locale === "ar" ? "## المقالات" : "## Articles");
+  for (const article of await getPublishedArticlesForExport(locale)) {
+    out.push("");
+    out.push("=".repeat(72));
+    out.push("");
+    out.push(
+      articleToMarkdown({
+        title: article.title,
+        language: locale,
+        canonicalUrl: absoluteUrl(helpArticleHref(locale, article.slug)),
+        collection: article.collectionName,
+        updatedAt: article.updatedAt,
+        excerpt: article.excerpt,
+        answerSummary: article.answerSummary,
+        keyFacts: article.keyFacts,
+        body: article.body,
+      }),
+    );
+  }
+  out.push("");
+  return out.join("\n");
+}
+
 export const LLMS_HEADERS = {
   "content-type": "text/plain; charset=utf-8",
   // Regenerated on publish through revalidation, cheap to serve in between.
   "cache-control": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
   "x-robots-tag": "all",
+} as const;
+
+export const LLMS_MD_HEADERS = {
+  ...LLMS_HEADERS,
+  "content-type": "text/markdown; charset=utf-8",
 } as const;
