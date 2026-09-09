@@ -338,6 +338,8 @@ const ar = {
     openIn: "افتحها في {name}",
     zoomImage: "كبّر الصورة: {alt}",
     closeImage: "أغلق الصورة",
+    zoomActual: "اعرض بالحجم الأصلي",
+    zoomFit: "اعرض ملء الشاشة",
     playVideo: "شغّل الفيديو: {title}",
     calloutInfo: "ملاحظة",
     calloutWarning: "تنبيه",

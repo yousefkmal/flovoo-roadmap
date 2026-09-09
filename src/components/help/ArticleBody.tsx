@@ -209,6 +209,8 @@ function Block({ node, dict }: { node: BlockNode; dict: Dictionary }) {
           height={typeof node.attrs?.height === "number" ? node.attrs.height : null}
           zoomLabel={t(dict.help.zoomImage, { alt })}
           closeLabel={dict.help.closeImage}
+          actualSizeLabel={dict.help.zoomActual}
+          fitLabel={dict.help.zoomFit}
         />
       );
     }

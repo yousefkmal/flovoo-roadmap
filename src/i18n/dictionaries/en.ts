@@ -337,6 +337,8 @@ const en: Dictionary = {
     openIn: "Open in {name}",
     zoomImage: "Enlarge image: {alt}",
     closeImage: "Close image",
+    zoomActual: "View at full size",
+    zoomFit: "Fit to screen",
     playVideo: "Play video: {title}",
     calloutInfo: "Note",
     calloutWarning: "Warning",
