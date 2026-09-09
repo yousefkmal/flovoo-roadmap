@@ -83,7 +83,7 @@ archived) · `feature_source` · `submission_status` · `content_language` ·
 | Table | Holds |
 | --- | --- |
 | `categories` | `slug`, `name_ar/en`, `color`, `sort_order` |
-| `features` | the board. Bilingual title/description, `status`, `vote_count`, `is_pinned`, `source`, `shipped_at` |
+| `features` | the board. Bilingual title/description, `status`, `vote_count`, `is_pinned`, `source`, `shipped_at`, and a picture (`image_url` + bilingual alt, 0022) |
 | `votes` | one row per person per feature, `voter_identity` + `user_id` |
 | `submissions` | customer ideas awaiting moderation, `merged_into`, `created_feature`, `internal_note`, `ip_hash` |
 | `changelog_entries` | release notes. Bilingual body, `image_url` + alt per language, `article_url`, `action_url` + labels, `is_published` |
@@ -671,7 +671,7 @@ ran in `public.app_migrations`, and recognises migrations applied before the
 table existed by a marker object each one creates. **The production project is
 the live roadmap** — it holds real features, votes and submissions — so
 `seed.sql` (roadmap dev data, deletes first) is never applied there; only
-`seed-help.sql` is. **Migrations already applied there are frozen**: 0001–0021
+`seed-help.sql` is. **Migrations already applied there are frozen**: 0001–0022
 as of 2026-09-09. Add a new numbered file for any schema change.
 
 The direct database host is IPv6-only and macOS `getaddrinfo` does not return
@@ -679,6 +679,20 @@ it to Node, so `SUPABASE_DB_URL` uses the **Session pooler** host
 (`aws-1-eu-west-1.pooler.supabase.com`, user `postgres.<ref>`, port 5432).
 PostgREST refreshes its schema cache a few seconds after DDL; a page loaded in
 that window says "Could not find the table … in the schema cache" once.
+
+### A feature can carry a picture (0022)
+
+- `features.image_url` plus bilingual alt. It renders **inside the feature
+  dialog, never on the board card** — a card is a title and a vote count, and
+  a wall of screenshots is a different product. Asked for by the team.
+- **Alt text is optional here, on purpose.** A roadmap card is not a published
+  article, and refusing the save over a description would stop the work. The
+  editor says so instead, and an empty description is the mark.
+- The picture comes from the help center's media library, the same one the
+  changelog editor writes to. One media store for the app.
+- **Shipping carries it into the changelog draft** (`draftChangelogForFeature`),
+  so the screenshot on the roadmap and the one in the announcement are the
+  same file rather than two uploads that drift.
 
 ## Deliberately not built
 

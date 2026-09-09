@@ -144,6 +144,22 @@ export function FeatureModal({
                     {feature.title}
                   </h2>
 
+                  {/* The screenshot lives here, in the dialog, and not on the
+                      board card: a card is a title and a vote count, and a
+                      gallery of screenshots is a different product. */}
+                  {feature.image ? (
+                    <figure className="mt-5 overflow-hidden rounded-control border border-border bg-subtle">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={feature.image.url}
+                        alt={feature.image.alt}
+                        loading="lazy"
+                        decoding="async"
+                        className="block h-auto w-full"
+                      />
+                    </figure>
+                  ) : null}
+
                   <section className="mt-5">
                     <h3 className="label-caps mb-2 text-text-secondary">
                       {dict.detail.description}

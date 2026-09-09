@@ -51,6 +51,10 @@ export interface Feature {
   /** Manual position among features the board ranks equally (migration 0015). */
   sort_order: number;
   source: FeatureSource;
+  /** A screenshot shown in the feature dialog, never on the board card (0022). */
+  image_url: string | null;
+  image_alt_ar: string | null;
+  image_alt_en: string | null;
   submitted_by_name: string | null;
   shipped_at: string | null;
   created_at: string;

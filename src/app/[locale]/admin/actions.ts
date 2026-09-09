@@ -127,6 +127,9 @@ function readFeatureInput(formData: FormData, categoryIds: string[]): FeatureInp
     status: isStatus(status) ? status : "under_review",
     category_id: categoryIds.includes(categoryId) ? categoryId : null,
     is_pinned: formData.get("is_pinned") === "on",
+    image_url: String(formData.get("image_url") ?? "").trim() || null,
+    image_alt_ar: String(formData.get("image_alt_ar") ?? "").trim() || null,
+    image_alt_en: String(formData.get("image_alt_en") ?? "").trim() || null,
   };
 }
 

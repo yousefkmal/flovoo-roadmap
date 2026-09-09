@@ -278,6 +278,9 @@ const en: Dictionary = {
     fieldActionLabelAr: "Button label (Arabic)",
     fieldActionLabelEn: "Button label (English)",
     urlHint: "Starts with http:// or https://",
+    fieldFeatureImage: "Feature image",
+    chooseFromLibrary: "Choose from library",
+    imageAltMissing: "The image has no alt text in one of the languages. This will not block the save, but anyone who cannot see it will not know what it shows.",
     altHint: "Read by anyone who cannot see the image — describe what is in it.",
   },
   help: {

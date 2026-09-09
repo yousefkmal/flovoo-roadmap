@@ -2,12 +2,13 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { ChevronUp, Save } from "lucide-react";
+import { ChevronUp, ImagePlus, Save, TriangleAlert } from "lucide-react";
 
 import { CategoryChip } from "@/components/ui/CategoryChip";
 import { FIELD_CLASS, Field } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { saveFeatureAction, type EditorState } from "@/app/[locale]/admin/actions";
+import { MediaPicker, type PickerMediaItem } from "@/components/admin/help/editor/MediaPicker";
 import { t, type Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import { FEATURE_STATUSES, type FeatureStatus } from "@/lib/types";
@@ -29,6 +30,9 @@ export interface EditorFeature {
   categoryId: string | null;
   isPinned: boolean;
   votes: number;
+  imageUrl: string;
+  imageAltAr: string;
+  imageAltEn: string;
 }
 
 /**
@@ -45,11 +49,13 @@ export function FeatureEditor({
   categories,
   locale,
   dict,
+  media,
 }: {
   feature: EditorFeature | null;
   categories: EditorCategory[];
   locale: Locale;
   dict: Dictionary;
+  media: PickerMediaItem[];
 }) {
   const [state, formAction, pending] = useActionState<EditorState, FormData>(
     saveFeatureAction.bind(null, locale, feature?.id ?? null),
@@ -63,6 +69,16 @@ export function FeatureEditor({
     categoryId: feature?.categoryId ?? "",
     isPinned: feature?.isPinned ?? false,
   });
+
+  // The picture, held in state so choosing from the library fills the fields
+  // and the preview at once.
+  const [image, setImage] = useState({
+    url: feature?.imageUrl ?? "",
+    altAr: feature?.imageAltAr ?? "",
+    altEn: feature?.imageAltEn ?? "",
+  });
+  const [library, setLibrary] = useState(media);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const errors = state.status === "invalid" ? state.errors : {};
   const category = categories.find((c) => c.id === draft.categoryId) ?? null;
@@ -184,6 +200,85 @@ export function FeatureEditor({
           {dict.admin.fieldPinned}
         </label>
 
+        {/* The picture. It appears inside the feature's dialog, never on the
+            board card — a card is a title and a vote count — and travels into
+            the changelog draft when the feature ships. */}
+        <fieldset className="flex flex-col gap-4 rounded-card border border-border p-4">
+          <legend className="px-1 text-sm font-semibold text-text">
+            {dict.admin.fieldFeatureImage}
+          </legend>
+
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-60 flex-1">
+              <Field id="image_url" label={dict.admin.fieldImageUrl}>
+              <input
+                id="image_url"
+                name="image_url"
+                type="url"
+                dir="ltr"
+                value={image.url}
+                onChange={(e) => setImage((current) => ({ ...current, url: e.target.value }))}
+                  className={`${FIELD_CLASS} text-start`}
+                />
+              </Field>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-control border border-border px-3 text-sm font-semibold text-text transition-colors duration-(--dur-micro) hover:bg-subtle"
+            >
+              <ImagePlus className="size-4" strokeWidth={2} aria-hidden />
+              {dict.admin.chooseFromLibrary}
+            </button>
+          </div>
+
+          {image.url ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field id="image_alt_ar" label={dict.admin.fieldImageAltAr}>
+                  <input
+                    id="image_alt_ar"
+                    name="image_alt_ar"
+                    dir="rtl"
+                    lang="ar"
+                    value={image.altAr}
+                    onChange={(e) => setImage((current) => ({ ...current, altAr: e.target.value }))}
+                    className={`${FIELD_CLASS} text-start`}
+                  />
+                </Field>
+                <Field id="image_alt_en" label={dict.admin.fieldImageAltEn}>
+                  <input
+                    id="image_alt_en"
+                    name="image_alt_en"
+                    dir="ltr"
+                    lang="en"
+                    value={image.altEn}
+                    onChange={(e) => setImage((current) => ({ ...current, altEn: e.target.value }))}
+                    className={`${FIELD_CLASS} text-start`}
+                  />
+                </Field>
+              </div>
+
+              {/* Missing alt does not block the save — a roadmap card is not a
+                  published article — but it is said out loud rather than
+                  quietly accepted. */}
+              {!image.altAr.trim() || !image.altEn.trim() ? (
+                <p className="flex items-start gap-2 text-xs text-warning-label">
+                  <TriangleAlert className="mt-0.5 size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+                  {dict.admin.imageAltMissing}
+                </p>
+              ) : null}
+
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image.url}
+                alt={locale === "ar" ? image.altAr : image.altEn}
+                className="block h-auto w-full max-w-md rounded-control border border-border"
+              />
+            </>
+          ) : null}
+        </fieldset>
+
         {state.status === "error" ? (
           <p role="alert" className="text-sm font-medium text-danger">
             {dict.admin.saveFailed}
@@ -248,6 +343,26 @@ export function FeatureEditor({
           />
         </div>
       </aside>
+
+      {/* The help center's library: one media store for the whole app. */}
+      <MediaPicker
+        open={pickerOpen}
+        items={library}
+        locale={locale}
+        dict={dict}
+        onPick={(picked) => {
+          setImage((current) => ({
+            url: picked.src,
+            // The library already holds a description per language; take it
+            // rather than making somebody retype what is already written.
+            altAr: current.altAr || (locale === "ar" ? picked.alt : ""),
+            altEn: current.altEn || (locale === "en" ? picked.alt : ""),
+          }));
+          setPickerOpen(false);
+        }}
+        onClose={() => setPickerOpen(false)}
+        onUploaded={(item) => setLibrary((current) => [item, ...current])}
+      />
     </div>
   );
 }
@@ -315,6 +430,7 @@ function PreviewCard({
           </div>
         </article>
       </div>
+
     </div>
   );
 }

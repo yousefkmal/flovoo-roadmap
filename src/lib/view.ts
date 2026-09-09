@@ -10,6 +10,8 @@ export interface FeatureView {
   id: string;
   title: string;
   description: string | null;
+  /** The feature's screenshot, in the reader's language where alt differs. */
+  image: { url: string; alt: string } | null;
   status: FeatureStatus;
   votes: number;
   isPinned: boolean;
@@ -39,10 +41,16 @@ export function toFeatureView(
   const description =
     locale === "ar" ? feature.description_ar : feature.description_en;
 
+  const imageAlt = locale === "ar" ? feature.image_alt_ar : feature.image_alt_en;
+
   return {
     id: feature.id,
     title,
     description,
+    // An alt-less image is still shown: the description is missing, not the
+    // picture. Screen readers get an empty alt, which marks it decorative —
+    // the honest reading when nobody has described it yet.
+    image: feature.image_url ? { url: feature.image_url, alt: imageAlt ?? "" } : null,
     status: feature.status,
     votes: feature.vote_count,
     isPinned: feature.is_pinned,

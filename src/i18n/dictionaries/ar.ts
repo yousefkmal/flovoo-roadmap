@@ -279,6 +279,9 @@ const ar = {
     fieldActionLabelAr: "نص الزر (عربي)",
     fieldActionLabelEn: "نص الزر (إنجليزي)",
     urlHint: "يبدأ بـ http:// أو https://",
+    fieldFeatureImage: "صورة الميزة",
+    chooseFromLibrary: "اختر من المكتبة",
+    imageAltMissing: "الصورة بلا وصف بديل بإحدى اللغتين. لن يمنع هذا الحفظ، لكن من لا يراها لن يعرف ما فيها.",
     altHint: "يظهر لمن لا يرى الصورة — اكتب ما فيها.",
   },
   help: {

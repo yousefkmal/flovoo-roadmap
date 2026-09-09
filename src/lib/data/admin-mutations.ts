@@ -31,6 +31,9 @@ export interface FeatureInput {
   status: FeatureStatus;
   category_id: string | null;
   is_pinned: boolean;
+  image_url: string | null;
+  image_alt_ar: string | null;
+  image_alt_en: string | null;
 }
 
 /**
@@ -83,11 +86,11 @@ export async function draftChangelogForFeature(featureId: string): Promise<void>
       title_en: feature.title_en,
       body_ar: plainToDoc(feature.description_ar),
       body_en: plainToDoc(feature.description_en),
-      image_url: null,
+      image_url: feature.image_url,
       image_url_en: null,
       cover_alt_needs_review: false,
-      image_alt_ar: null,
-      image_alt_en: null,
+      image_alt_ar: feature.image_alt_ar,
+      image_alt_en: feature.image_alt_en,
       article_url: null,
       action_url: null,
       action_label_ar: null,
@@ -107,7 +110,7 @@ export async function draftChangelogForFeature(featureId: string): Promise<void>
 
   const { data: feature, error } = await supabase
     .from("features")
-    .select("title_ar, title_en, description_ar, description_en")
+    .select("title_ar, title_en, description_ar, description_en, image_url, image_alt_ar, image_alt_en")
     .eq("id", featureId)
     .single();
   if (error || !feature) return;
@@ -119,6 +122,12 @@ export async function draftChangelogForFeature(featureId: string): Promise<void>
     title_en: feature.title_en,
     body_ar: plainToDoc(feature.description_ar),
     body_en: plainToDoc(feature.description_en),
+    // The screenshot travels with it: the picture on the roadmap card and the
+    // picture in the announcement are the same picture, and asking somebody to
+    // upload it twice is how the two drift apart.
+    image_url: feature.image_url,
+    image_alt_ar: feature.image_alt_ar,
+    image_alt_en: feature.image_alt_en,
     is_published: false,
   });
 }

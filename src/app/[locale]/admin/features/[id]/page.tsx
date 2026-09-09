@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { FeatureEditor, type EditorFeature } from "@/components/admin/FeatureEditor";
 import { getDictionary } from "@/i18n";
 import { isLocale } from "@/i18n/config";
+import { getAdminHelpMedia } from "@/lib/data/help-admin-repository";
 import { getFeatureById } from "@/lib/data/admin-repository";
+import { mediaPublicUrl } from "@/lib/help/media";
 import { getCategories } from "@/lib/data/repository";
 import { requireAdminPage } from "@/lib/auth/admin";
 
@@ -20,7 +22,7 @@ export default async function FeatureEditorPage({
   await requireAdminPage();
 
   const dict = getDictionary(locale);
-  const categories = await getCategories();
+  const [categories, media] = await Promise.all([getCategories(), getAdminHelpMedia()]);
 
   let feature: EditorFeature | null = null;
   if (id !== "new") {
@@ -36,6 +38,9 @@ export default async function FeatureEditorPage({
       categoryId: found.category_id,
       isPinned: found.is_pinned,
       votes: found.vote_count,
+      imageUrl: found.image_url ?? "",
+      imageAltAr: found.image_alt_ar ?? "",
+      imageAltEn: found.image_alt_en ?? "",
     };
   }
 
@@ -55,6 +60,14 @@ export default async function FeatureEditorPage({
         }))}
         locale={locale}
         dict={dict}
+        media={media.map((m) => ({
+          id: m.id,
+          url: mediaPublicUrl(m.storage_path),
+          altAr: m.alt_ar ?? "",
+          altEn: m.alt_en ?? "",
+          width: m.width,
+          height: m.height,
+        }))}
       />
     </main>
   );

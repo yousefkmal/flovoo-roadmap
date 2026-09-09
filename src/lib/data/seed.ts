@@ -56,7 +56,14 @@ export const CATEGORIES: Category[] = [
 
 const [WHATSAPP, INBOX, AUTOMATION, REPORTS, MOBILE] = CATEGORIES.map((c) => c.id);
 
-type SeedFeature = Omit<Feature, "updated_at"> & { updated_at?: string };
+// The picture (0022) is optional in the seed: none of the sample features has
+// one, and spelling out three nulls on every row would say nothing.
+type SeedFeature = Omit<Feature, "updated_at" | "image_url" | "image_alt_ar" | "image_alt_en"> & {
+  updated_at?: string;
+  image_url?: string | null;
+  image_alt_ar?: string | null;
+  image_alt_en?: string | null;
+};
 
 const features: SeedFeature[] = [
   // ── In progress ──────────────────────────────────────────────────────────
@@ -376,6 +383,9 @@ const features: SeedFeature[] = [
 export const FEATURES: Feature[] = features.map((f) => ({
   ...f,
   updated_at: f.updated_at ?? f.created_at,
+  image_url: f.image_url ?? null,
+  image_alt_ar: f.image_alt_ar ?? null,
+  image_alt_en: f.image_alt_en ?? null,
 }));
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
