@@ -384,6 +384,7 @@ export function errorLabel(dict: Dictionary, error: HelpFieldError): string {
     invalidIcon: dict.adminHelp.errInvalidIcon,
     altMissing: dict.adminHelp.errAltMissing,
     summaryLength: dict.adminHelp.errSummaryLength,
+    summaryChars: dict.adminHelp.errSummaryChars,
     summaryUnreviewed: dict.adminHelp.errSummaryUnreviewed,
     invalidPath: dict.adminHelp.errInvalidPath,
     samePath: dict.adminHelp.errSamePath,

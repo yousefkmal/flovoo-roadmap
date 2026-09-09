@@ -16,7 +16,7 @@ import {
   localUpsertTranslation,
 } from "@/lib/data/help-local-store";
 import { getServiceSupabase } from "@/lib/data/supabase-admin";
-import { deriveArticleMeta, type BlockDocument } from "@/lib/help/blocks";
+import { translationRow, type HelpTranslationInput } from "@/lib/help/translation-row";
 import { removeHelpMediaFile } from "@/lib/help/media";
 import type {
   HelpArticle,
@@ -53,25 +53,13 @@ export class CollectionNotEmpty extends Error {
 
 const UNIQUE_VIOLATION = "23505";
 
+// The editor page and the save action both type against this; it lives with
+// the row builder that consumes it.
+export type { HelpTranslationInput };
+
 // ---------------------------------------------------------------------------
 // Articles
 // ---------------------------------------------------------------------------
-
-export interface HelpTranslationInput {
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  body: BlockDocument;
-  meta_title: string | null;
-  meta_description: string | null;
-  /** Phase 7B: the extraction fields. */
-  answer_summary: string | null;
-  /** The editor says the writer has read the drafted summary and accepts it. */
-  summary_reviewed: boolean;
-  question_title: string | null;
-  key_facts: string[];
-  review_due_at: string | null;
-}
 
 export interface HelpArticleInput {
   collection_id: string;
@@ -81,44 +69,6 @@ export interface HelpArticleInput {
   section: { ar: string; en: string } | null;
   icon: string;
   translations: { ar: HelpTranslationInput; en: HelpTranslationInput | null };
-}
-
-function translationRow(
-  articleId: string,
-  language: Locale,
-  input: HelpTranslationInput,
-  existing: HelpArticleTranslation | undefined,
-  now: string,
-): HelpArticleTranslation {
-  return {
-    id: existing?.id ?? randomUUID(),
-    article_id: articleId,
-    language,
-    slug: input.slug,
-    title: input.title,
-    excerpt: input.excerpt,
-    answer_summary: input.answer_summary,
-    // Two ways to review a drafted summary: rewrite it, or press approve. The
-    // text comparison is the one that cannot be forged by a stale client.
-    summary_needs_review:
-      (existing?.summary_needs_review ?? false) &&
-      !input.summary_reviewed &&
-      input.answer_summary === (existing?.answer_summary ?? null),
-    question_title: input.question_title,
-    key_facts: input.key_facts,
-    // Six months from now unless the writer set a date themselves.
-    review_due_at:
-      input.review_due_at ??
-      existing?.review_due_at ??
-      new Date(Date.parse(now) + 182 * 24 * 60 * 60 * 1000).toISOString(),
-    body: input.body,
-    meta_title: input.meta_title,
-    meta_description: input.meta_description,
-    og_image_path: existing?.og_image_path ?? null,
-    created_at: existing?.created_at ?? now,
-    updated_at: now,
-    ...deriveArticleMeta(input.body),
-  };
 }
 
 export async function saveHelpArticle(
@@ -207,6 +157,21 @@ export async function saveHelpArticle(
     articleId = (data as { id: string }).id;
   }
 
+  // The stored row is needed for two reasons: `translationRow` keeps the
+  // existing primary key and creation date, and the review flag is decided by
+  // comparing the incoming summary against the one already stored.
+  const existingByLanguage = new Map<Locale, HelpArticleTranslation>();
+  {
+    const { data, error } = await supabase
+      .from("help_article_translations")
+      .select("*")
+      .eq("article_id", articleId);
+    if (error) throw new Error(`Failed to load translations: ${error.message}`);
+    for (const row of (data ?? []) as HelpArticleTranslation[]) {
+      existingByLanguage.set(row.language, row);
+    }
+  }
+
   for (const language of ["ar", "en"] as const) {
     const next = input.translations[language];
     if (!next) {
@@ -218,23 +183,15 @@ export async function saveHelpArticle(
       if (error) throw new Error(`Failed to remove translation: ${error.message}`);
       continue;
     }
-    const derived = deriveArticleMeta(next.body);
-    const { error } = await supabase.from("help_article_translations").upsert(
-      {
-        article_id: articleId,
-        language,
-        slug: next.slug,
-        title: next.title,
-        excerpt: next.excerpt,
-        body: next.body,
-        meta_title: next.meta_title,
-        meta_description: next.meta_description,
-        body_plain: derived.body_plain,
-        toc: derived.toc,
-        reading_minutes: derived.reading_minutes,
-      },
-      { onConflict: "article_id,language" },
-    );
+    // One row builder for both backends. It used to be two column lists that
+    // had to agree, and they stopped agreeing: this one carried the body and
+    // the meta while silently dropping `answer_summary`, `question_title`,
+    // `key_facts` and `summary_needs_review`, so those four fields could be
+    // typed, saved, and lost without an error anywhere.
+    const row = translationRow(articleId, language, next, existingByLanguage.get(language), now);
+    const { error } = await supabase
+      .from("help_article_translations")
+      .upsert(row, { onConflict: "article_id,language" });
     if (error) {
       if (error.code === UNIQUE_VIOLATION) throw new SlugTaken(language);
       throw new Error(`Failed to save ${language} translation: ${error.message}`);

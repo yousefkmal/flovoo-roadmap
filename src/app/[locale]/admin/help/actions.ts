@@ -83,6 +83,7 @@ export type HelpFieldError =
   | "invalidIcon"
   | "altMissing"
   | "summaryLength"
+  | "summaryChars"
   | "summaryUnreviewed"
   | "invalidPath"
   | "samePath";
@@ -215,7 +216,16 @@ function validateTranslation(
   // opening paragraph and little else, so an article without one is invisible
   // however good the rest of it is. Saving a draft is never blocked.
   const answerSummary = text(t.answer_summary, 700);
-  if (requireAlt && summaryBlocksPublish(answerSummary.value)) {
+  // The column itself refuses anything outside 80–700 characters (0017), so a
+  // summary that violates it has to be caught here. Before this check the row
+  // was rejected by Postgres and the whole save failed with a generic error,
+  // pointing at no field at all.
+  if (
+    answerSummary.value !== null &&
+    (answerSummary.value.length < 80 || answerSummary.value.length > 700)
+  ) {
+    errors[`${prefix}.answer_summary`] = "summaryChars";
+  } else if (requireAlt && summaryBlocksPublish(answerSummary.value)) {
     errors[`${prefix}.answer_summary`] = answerSummary.value ? "summaryLength" : "required";
   } else if (requireAlt && t.summary_reviewed === false) {
     // A drafted summary nobody has read is not an answer. Same rule as a

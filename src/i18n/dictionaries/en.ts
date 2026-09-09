@@ -583,6 +583,7 @@ const en: Dictionary = {
     summaryApprove: "Approve as written",
     questionTitleHint: "Write it as a user would ask, e.g. How do I connect WhatsApp to Flovoo?",
     errSummaryLength: "The summary must be between 25 and 110 words",
+    errSummaryChars: "The direct answer must be between 80 and 700 characters",
     errAltMissing: "Every image needs alt text, reviewed, before this can be published",
     errSummaryUnreviewed: "The summary is an unreviewed draft — review or approve it before publishing",
     errInvalidPath: "Enter a path starting with / or a full URL",

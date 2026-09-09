@@ -205,7 +205,12 @@ function Toolbar({
     <div
       role="toolbar"
       aria-label={labels.fieldBody}
-      className="flex flex-wrap items-center gap-0.5 border-b border-border px-2 py-1.5"
+      // Sticky, so Bold and Heading stay reachable in a long article instead of
+      // scrolling away with the top of the card. It parks directly under the
+      // save bar, whose height is published as `--help-sticky-top` because that
+      // bar wraps to two rows on a narrow screen.
+      style={{ top: "var(--help-sticky-top, 4rem)" }}
+      className="sticky z-10 flex flex-wrap items-center gap-0.5 rounded-t-card border-b border-border bg-card px-2 py-1.5"
     >
       <Btn Icon={Undo2} label={labels.tbUndo} disabled={!state.canUndo} onClick={() => editor.chain().focus().undo().run()} />
       <Btn Icon={Redo2} label={labels.tbRedo} disabled={!state.canRedo} onClick={() => editor.chain().focus().redo().run()} />

@@ -88,10 +88,14 @@ export function FigureView({ node, updateAttributes, deleteNode, extension, sele
       data-drag-handle
       className={`my-3 rounded-card border bg-card p-3 ${selected ? "border-flovoo-blue" : "border-border"}`}
     >
+      {/* The same box the reader gets: full column width, natural ratio. It
+          used to be capped at 18rem tall, which showed a 1200x720 screenshot
+          at 480x288 inside a 540px column — smaller than published, and read
+          by writers as the image being cut off. */}
       <div className="flex items-center justify-center overflow-hidden rounded-control bg-subtle">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={(node.attrs.alt as string) ?? ""} className="max-h-72 w-auto max-w-full" />
+          <img src={src} alt={(node.attrs.alt as string) ?? ""} className="block h-auto w-full" />
         ) : (
           <ImageIcon className="my-10 size-8 text-muted" strokeWidth={2} aria-hidden />
         )}

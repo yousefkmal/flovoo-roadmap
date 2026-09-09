@@ -4,7 +4,7 @@ import { GeoPanel } from "./GeoPanel";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ExternalLink, Monitor, Smartphone, TriangleAlert } from "lucide-react";
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import {
   saveHelpArticleAction,
@@ -149,14 +149,42 @@ export function HelpArticleEditor({
     published: t.statusPublished,
     archived: t.statusArchived,
   };
+  // The body toolbar is sticky too, and has to park directly under this bar.
+  // Its height is not a constant: the bar wraps to two rows on a narrow screen,
+  // so it is measured and published as a custom property the toolbar reads.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const saveBarRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const bar = saveBarRef.current;
+    const root = rootRef.current;
+    if (!bar || !root) return;
+    const publish = () => {
+      const top = Number.parseFloat(getComputedStyle(bar).top) || 0;
+      root.style.setProperty("--help-sticky-top", `${Math.round(top + bar.offsetHeight)}px`);
+    };
+    publish();
+    // Two triggers, because the bar changes height for two reasons: the
+    // viewport narrowing until it wraps, and its own contents changing.
+    window.addEventListener("resize", publish);
+    const observer = new ResizeObserver(publish);
+    observer.observe(bar);
+    return () => {
+      window.removeEventListener("resize", publish);
+      observer.disconnect();
+    };
+  });
+
   const enEmpty = !draft.en.title && !draft.en.slug;
   const previewDict = getDictionary(tab);
   const previewDraft = draft[tab];
 
   return (
-    <div className="mt-6 flex flex-col gap-6">
+    <div ref={rootRef} className="mt-6 flex flex-col gap-6">
       {/* Save bar */}
-      <div className="sticky top-16 z-20 -mx-5 flex flex-wrap items-center gap-2 border-b border-border bg-card/95 px-5 py-2.5 backdrop-blur lg:-mx-10 lg:px-10">
+      <div
+        ref={saveBarRef}
+        className="sticky top-16 z-20 -mx-5 flex flex-wrap items-center gap-2 border-b border-border bg-card/95 px-5 py-2.5 backdrop-blur lg:-mx-10 lg:px-10"
+      >
         <div className="flex items-center gap-1 rounded-control border border-border p-0.5" role="tablist" aria-label={t.tabAr}>
           {(["ar", "en"] as const).map((language) => (
             <button
