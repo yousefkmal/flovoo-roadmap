@@ -52,6 +52,9 @@ export default async function HelpArticleEditorPage({
 
   let initial: ArticleDraft;
   let publicHref: string | null = null;
+  // Stored dates the readiness checks read. A new article has neither.
+  let updatedAt: string | null = null;
+  let reviewDueAt: { ar: string | null; en: string | null } = { ar: null, en: null };
 
   if (id === "new") {
     // "Create draft from this" in the content-gap inbox arrives with the
@@ -94,6 +97,11 @@ export default async function HelpArticleEditorPage({
     };
     const own = found.translations[locale] ?? found.translations.ar;
     publicHref = own ? helpArticleHref(locale, own.slug) : null;
+    updatedAt = found.article.updated_at;
+    reviewDueAt = {
+      ar: found.translations.ar?.review_due_at ?? null,
+      en: found.translations.en?.review_due_at ?? null,
+    };
   }
 
   return (
@@ -118,6 +126,8 @@ export default async function HelpArticleEditorPage({
         locale={locale}
         dict={dict}
         publicHref={publicHref}
+        updatedAt={updatedAt}
+        reviewDueAt={reviewDueAt}
       />
     </main>
   );

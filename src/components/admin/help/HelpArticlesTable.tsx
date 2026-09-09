@@ -152,6 +152,7 @@ export function HelpArticlesTable({
               <th scope="col" className="px-3 py-2.5 text-start">{dict.adminHelp.colCollection}</th>
               <th scope="col" className="px-3 py-2.5 text-start">{dict.adminHelp.colStatus}</th>
               <th scope="col" className="px-3 py-2.5 text-start">{dict.adminHelp.colLanguages}</th>
+              <th scope="col" className="px-3 py-2.5 text-start">{dict.checks.columnLabel}</th>
               <th scope="col" className="px-3 py-2.5 text-start">{dict.adminHelp.colUpdated}</th>
               <th scope="col" className="px-3 py-2.5">
                 <span className="sr-only">{dict.adminHelp.edit}</span>
@@ -217,6 +218,9 @@ export function HelpArticlesTable({
                       </span>
                     )}
                   </td>
+                  <td className="whitespace-nowrap px-3 py-2.5">
+                    <ReadinessCell readiness={row.readiness} locale={locale} />
+                  </td>
                   <td className="numeric whitespace-nowrap px-3 py-2.5 text-text-tertiary">{row.updatedLabel}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-end">
                     <span className="inline-flex items-center gap-1">
@@ -247,5 +251,41 @@ export function HelpArticlesTable({
         </table>
       </div>
     </div>
+  );
+}
+
+/**
+ * The readiness score per language, worst first.
+ *
+ * Two numbers rather than an average: an article can be finished in Arabic and
+ * half-written in English, and an average would hide exactly the half that
+ * needs the afternoon.
+ */
+function ReadinessCell({
+  readiness,
+  locale,
+}: {
+  readiness: { ar: number | null; en: number | null };
+  locale: Locale;
+}) {
+  const order: Locale[] = locale === "ar" ? ["ar", "en"] : ["en", "ar"];
+  const shown = order.filter((language) => readiness[language] !== null);
+  if (shown.length === 0) return <span className="text-xs text-text-tertiary">—</span>;
+  return (
+    <span className="flex items-center gap-2">
+      {shown.map((language) => {
+        const score = readiness[language]!;
+        const tone =
+          score >= 80 ? "text-success-label" : score >= 55 ? "text-warning-label" : "text-danger";
+        return (
+          <span key={language} className="inline-flex items-baseline gap-1">
+            <span className="text-[11px] uppercase text-text-tertiary">
+              {language === "ar" ? "ع" : "EN"}
+            </span>
+            <span className={`numeral text-xs font-bold ${tone}`}>{score}</span>
+          </span>
+        );
+      })}
+    </span>
   );
 }

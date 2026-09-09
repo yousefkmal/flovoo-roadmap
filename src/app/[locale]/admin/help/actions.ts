@@ -1,6 +1,5 @@
 "use server";
 
-import { summaryBlocksPublish } from "@/lib/help/geo";
 import { articleUrls, pingIndexNow } from "@/lib/help/indexnow";
 import { revalidatePath } from "next/cache";
 
@@ -212,9 +211,15 @@ function validateTranslation(
   // screen reader says and what image search indexes.
   else if (requireAlt && figureWithoutAlt(t.body)) errors[`${prefix}.body`] = "altMissing";
 
-  // The one extraction field publishing enforces: a retrieval system reads the
-  // opening paragraph and little else, so an article without one is invisible
-  // however good the rest of it is. Saving a draft is never blocked.
+  // Publishing no longer waits on a summary. It used to, on the reasoning that
+  // an article without one is invisible to retrieval — true, but it is advice,
+  // and advice belongs in the readiness score, not in a locked door. The only
+  // thing publishing still refuses is an image with no alt text, because that
+  // one has a reader on the other end who cannot see the picture.
+  //
+  // Nothing leaks by relaxing it: an unreviewed summary still reads as absent
+  // to every reader, every endpoint and every JSON-LD node. That gate lives in
+  // the repository and is untouched.
   const answerSummary = text(t.answer_summary, 700);
   // The column itself refuses anything outside 80–700 characters (0017), so a
   // summary that violates it has to be caught here. Before this check the row
@@ -225,12 +230,6 @@ function validateTranslation(
     (answerSummary.value.length < 80 || answerSummary.value.length > 700)
   ) {
     errors[`${prefix}.answer_summary`] = "summaryChars";
-  } else if (requireAlt && summaryBlocksPublish(answerSummary.value)) {
-    errors[`${prefix}.answer_summary`] = answerSummary.value ? "summaryLength" : "required";
-  } else if (requireAlt && t.summary_reviewed === false) {
-    // A drafted summary nobody has read is not an answer. Same rule as a
-    // drafted image description: it counts as missing until somebody looks.
-    errors[`${prefix}.answer_summary`] = "summaryUnreviewed";
   }
   const questionTitle = text(t.question_title, 200);
   if (questionTitle.error) errors[`${prefix}.question_title`] = questionTitle.error;

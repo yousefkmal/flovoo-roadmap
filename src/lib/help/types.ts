@@ -185,6 +185,8 @@ export interface HelpAdminArticleRow {
   publishedAt: string | null;
   /** Any figure in either language still carrying a machine-written alt. */
   hasDraftAlt: boolean;
+  /** 0–100 per language, the same score the editor shows. Null with no translation. */
+  readiness: { ar: number | null; en: number | null };
   /** A translation exists with no answer summary — it cannot be published. */
   needsSummary: boolean;
   /** True when a drafted summary is present but nobody has approved it. */

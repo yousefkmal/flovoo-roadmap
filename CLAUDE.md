@@ -379,17 +379,22 @@ The help center is written to be read by assistants, not only by people.
   description), `question_title` (the same article phrased as the question a
   reader would type), `key_facts` (jsonb list of label/value pairs, rendered as
   a table and as `DefinedTerm` where it fits), `review_due_at`.
-- **The summary is prose, not a slogan.** `summaryBlocksPublish()` refuses a
-  summary that opens with a pronoun or a bare reference — an extracted
-  paragraph has no preceding sentence to resolve it against.
+- **The summary is advice, not a gate** (changed 2026-09-09). Publishing used
+  to refuse an article without one, and no longer does: it is guidance, and
+  guidance belongs in the readiness score rather than a locked door. The only
+  thing publishing still refuses is an image with no alt text.
+- **The column itself refuses a summary outside 80–700 characters** (`0017`),
+  and the action validates that bound before the row is written. Without that
+  check Postgres rejects the row and the whole save fails with a generic error
+  pointing at no field.
 - **A drafted summary is invisible until somebody approves it** (`0021`).
   All 38 published articles predate 7B, so 74 summaries were drafted in bulk
   (`help:summary-worklist` → write → `help:summary-apply`) with
   `summary_needs_review = true`. That flag means *absent*: `reviewedSummary()`
   in `help-repository.ts` nulls it for the page, the `.md` endpoint, the meta
-  description and `llms.txt`, and publishing still errors with
-  `summaryUnreviewed`. Editing the field clears it, and so does the editor's
-  approve button.
+  description and `llms.txt`. Editing the field clears it, and so does the
+  editor's approve button. Publishing no longer checks it — the flag hides the
+  text from readers, which is the part that matters.
   **Deploy that guard before writing drafts to production, not after.** Doing
   it the other way round put the drafts on live pages for a few minutes: the
   deployed code read `answer_summary` directly and the ISR window expired
@@ -442,9 +447,17 @@ The help center is written to be read by assistants, not only by people.
   dashboard prints that caveat rather than implying a metric.
   `help_geo_manual_checks` is there because the user checking by hand is still
   the best signal available.
-- `geoScore` (`lib/help/geo.ts`) and the editor's GEO panel score an article
-  against `docs/geo-playbook.md`. **Advice, never a gate** — publishing is
-  blocked by missing alt text, not by a low score.
+- **`lib/help/content-checks.ts` is the readiness checklist** — nineteen items
+  covering SEO and GEO together, weighted by impact and summing to 100. It
+  replaced `lib/help/geo.ts` (ten GEO-only items) on 2026-09-09. Pure and
+  dependency-free, because the blog runs the same file: each estate builds its
+  own `ContentSnapshot` (`content-snapshot.ts` here, HTML-based on the website)
+  and the checks read only that.
+  **A check that does not apply leaves the sum**, numerator and denominator
+  both — an article with no images is not marked down for having no alt text —
+  so 100 means "nothing left that applies", not "nothing was looked at".
+  The editor shows it as `ReadinessPanel` and the article list shows the score
+  per language. **Advice, never a gate.**
 - The AI dashboard is `/[locale]/admin/help/ai` (+ `/prompts`). Both are in
   `scripts/check-admin-guard.ts`; both were verified with a marker row that a
   cookieless request must not return.
@@ -483,6 +496,14 @@ Run these before calling any phase done, and again before a deploy.
 
 ## Gotchas this codebase has already paid for
 
+- **Two column lists for one table is how four fields went missing.** The
+  Supabase branch of `saveHelpArticle` had its own inlined `upsert` object
+  beside the shared row builder; it carried the title, body and meta and
+  silently dropped `answer_summary`, `question_title`, `key_facts` and
+  `summary_needs_review`. No error, no clue — the fields simply came back empty
+  on reopening. One builder (`lib/help/translation-row.ts`) now serves both
+  backends and is unit tested. When you add a column, add it there and nowhere
+  else.
 - **`animate-fade-up` with `fill-mode: both`** pinned opacity at 0 in hidden
   tabs where animations never advance. Animate transform only.
 - **dnd-kit needs a stable `DndContext id`** or its generated `aria-describedby`
@@ -595,6 +616,11 @@ done**: schema, seed, the public home / category / article pages.
 - Lives under `src/app/[locale]/admin/help/*` behind the existing admin layout
   guard; every action in `admin/help/actions.ts` calls `requireAdmin()` itself.
   Sub-navigation: articles · topics · media (`HelpAdminNav`).
+- **The articles list loads every body**, because the readiness column cannot
+  be computed without reading the article. Roughly a megabyte across seventy
+  articles, on an admin page behind auth; the media page already did the same
+  for its usage count. Do not "optimise" it back to heads-only without also
+  removing the column.
 - **Data**: `help-admin-repository.ts` / `help-admin-mutations.ts` (service
   role). Without Supabase they read and write the same `localHelpContent()`
   snapshot the public repository reads — never merge seed and edits elsewhere.
@@ -645,8 +671,8 @@ ran in `public.app_migrations`, and recognises migrations applied before the
 table existed by a marker object each one creates. **The production project is
 the live roadmap** — it holds real features, votes and submissions — so
 `seed.sql` (roadmap dev data, deletes first) is never applied there; only
-`seed-help.sql` is. **Migrations already applied there are frozen**: 0001–0020
-as of 2026-09-06. Add a new numbered file for any schema change.
+`seed-help.sql` is. **Migrations already applied there are frozen**: 0001–0021
+as of 2026-09-09. Add a new numbered file for any schema change.
 
 The direct database host is IPv6-only and macOS `getaddrinfo` does not return
 it to Node, so `SUPABASE_DB_URL` uses the **Session pooler** host

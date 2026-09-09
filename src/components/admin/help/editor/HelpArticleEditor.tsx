@@ -1,6 +1,6 @@
 "use client";
 
-import { GeoPanel } from "./GeoPanel";
+import { ReadinessPanel } from "./ReadinessPanel";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ExternalLink, Monitor, Smartphone, TriangleAlert } from "lucide-react";
@@ -53,6 +53,8 @@ export function HelpArticleEditor({
   locale,
   dict,
   publicHref,
+  updatedAt,
+  reviewDueAt,
 }: {
   initial: ArticleDraft;
   collections: EditorCollectionOption[];
@@ -60,6 +62,9 @@ export function HelpArticleEditor({
   locale: Locale;
   dict: Dictionary;
   publicHref: string | null;
+  /** Stored dates, for the freshness checks. Null on a new article. */
+  updatedAt: string | null;
+  reviewDueAt: { ar: string | null; en: string | null };
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<ArticleDraft>(initial);
@@ -250,6 +255,13 @@ export function HelpArticleEditor({
                 err={(field) => err(`${language}.${field}`)}
                 t={t}
                 dictionary={dict}
+                hasOtherLanguage={
+                  language === "ar"
+                    ? Boolean(draft.en.title.trim() || draft.en.slug.trim())
+                    : Boolean(draft.ar.title.trim() || draft.ar.slug.trim())
+                }
+                updatedAt={updatedAt}
+                reviewDueAt={reviewDueAt[language]}
               />
               <div>
                 <p className="mb-1.5 text-sm font-semibold text-text">{t.fieldBody}</p>
@@ -373,6 +385,9 @@ function TranslationFields({
   err,
   t,
   dictionary,
+  hasOtherLanguage,
+  updatedAt,
+  reviewDueAt,
 }: {
   language: Locale;
   draft: TranslationDraft;
@@ -380,6 +395,9 @@ function TranslationFields({
   err: (field: string) => string | undefined;
   t: Dictionary["adminHelp"];
   dictionary: Dictionary;
+  hasOtherLanguage: boolean;
+  updatedAt: string | null;
+  reviewDueAt: string | null;
 }) {
   const dir = language === "ar" ? "rtl" : "ltr";
   const id = (field: string) => `${language}-${field}`;
@@ -459,7 +477,14 @@ function TranslationFields({
         </Field>
       </div>
       <div className="sm:col-span-2">
-        <GeoPanel draft={draft} locale={language} dict={dictionary} />
+        <ReadinessPanel
+          draft={draft}
+          locale={language}
+          dict={dictionary}
+          hasOtherLanguage={hasOtherLanguage}
+          updatedAt={updatedAt}
+          reviewDueAt={reviewDueAt}
+        />
       </div>
       <Field id={id("meta-title")} label={t.fieldMetaTitle} error={err("meta_title")}>
         <input id={id("meta-title")} dir={dir} lang={language} value={draft.meta_title} onChange={(e) => onChange({ meta_title: e.target.value })} className={`${FIELD_CLASS} text-start`} />

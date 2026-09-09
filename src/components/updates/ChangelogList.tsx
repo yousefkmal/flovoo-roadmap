@@ -130,11 +130,19 @@ export function ChangelogList({
                   <img
                     src={entry.imageUrl}
                     alt={entry.imageAlt}
-                    width={1200}
-                    height={600}
                     loading="lazy"
                     decoding="async"
-                    className="mb-8 aspect-[2/1] w-full rounded-control border border-border object-cover"
+                    // The cover is a screenshot, not a decorative banner. It
+                    // used to be forced into a 2:1 box with object-cover, which
+                    // cut 11% off the height of an ordinary 16:9 capture and up
+                    // to 22% off some — measured across all 40 live covers.
+                    //
+                    // The 1200x600 attributes went with it: they described the
+                    // box, not the file, and keeping them would reserve the
+                    // wrong space and jump when the real image arrived. Real
+                    // dimensions would need somewhere to store them; the covers
+                    // are a bare URL column today.
+                    className="mb-8 block h-auto w-full rounded-control border border-border"
                   />
                 ) : null}
 

@@ -11,6 +11,8 @@ import type {
   HelpMedia,
   HelpRedirect,
 } from "@/lib/help/types";
+import { contentScore, runContentChecks } from "@/lib/help/content-checks";
+import { helpContentSnapshot } from "@/lib/help/content-snapshot";
 import type { Locale } from "@/lib/types";
 
 /**
@@ -52,6 +54,18 @@ type TranslationHead = Pick<
   HelpArticleTranslation,
   "id" | "article_id" | "language" | "slug" | "title" | "updated_at"
 > & {
+  /**
+   * The body and the meta fields come along because the list shows a readiness
+   * score, and that score cannot be computed without reading the article. It
+   * costs a megabyte or so across seventy articles — the media page already
+   * loads every body for its usage count — and it buys a column that tells an
+   * editor where to spend the afternoon.
+   */
+  body?: HelpArticleTranslation["body"];
+  meta_title?: string | null;
+  meta_description?: string | null;
+  question_title?: string | null;
+  key_facts?: string[];
   /** Generated column (migration 0014). Absent from the local store's rows. */
   has_draft_alt?: boolean;
   answer_summary?: string | null;
@@ -73,18 +87,42 @@ async function translationHeads(): Promise<TranslationHead[]> {
     return localHelpContent().translations.map((t) => ({
       ...t,
       has_draft_alt: bodyHasDraftAlt(t.body),
-      answer_summary: t.answer_summary,
-      summary_needs_review: t.summary_needs_review,
-      review_due_at: t.review_due_at,
     }));
   }
   const { data, error } = await supabase
     .from("help_article_translations")
     .select(
-      "id, article_id, language, slug, title, updated_at, has_draft_alt, answer_summary, summary_needs_review, review_due_at",
+      "id, article_id, language, slug, title, updated_at, has_draft_alt, answer_summary, summary_needs_review, review_due_at, meta_title, meta_description, question_title, key_facts, body",
     );
   if (error) throw new Error(`Failed to load help translations: ${error.message}`);
   return data as TranslationHead[];
+}
+
+/** The same score the editor's panel shows, for one translation in the list. */
+function readinessOf(
+  head: TranslationHead | undefined,
+  language: Locale,
+  hasOtherLanguage: boolean,
+  articleUpdatedAt: string,
+): number | null {
+  if (!head?.body) return null;
+  return contentScore(
+    runContentChecks(
+      helpContentSnapshot({
+        language,
+        title: head.title,
+        metaTitle: head.meta_title ?? null,
+        metaDescription: head.meta_description ?? null,
+        answerSummary: head.answer_summary ?? null,
+        questionTitle: head.question_title ?? null,
+        keyFacts: Array.isArray(head.key_facts) ? head.key_facts : [],
+        body: head.body,
+        hasOtherLanguage,
+        updatedAt: head.updated_at ?? articleUpdatedAt,
+        reviewDueAt: head.review_due_at ?? null,
+      }),
+    ),
+  );
 }
 
 /** The articles list: newest edit first, each with whatever translations it has. */
@@ -137,8 +175,10 @@ export async function getAdminHelpArticles(): Promise<HelpAdminArticleRow[]> {
           updatedAt,
           publishedAt: article.published_at,
           hasDraftAlt: Boolean(t.ar?.has_draft_alt || t.en?.has_draft_alt),
-          // Cheap signals only: the full readiness score needs the body, which
-          // a list of 70 articles has no business loading.
+          readiness: {
+            ar: readinessOf(t.ar, "ar", Boolean(t.en), article.updated_at),
+            en: readinessOf(t.en, "en", Boolean(t.ar), article.updated_at),
+          },
           // An unreviewed draft counts as no summary, so one filter answers
           // "which articles still need me?" whether the field is empty or
           // holds text nobody has read.
